@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "1.0",
+  "conference": {
+    "id": "sample-conf-2026",
+    "name": "Sample Conf",
+    "tagline": "A conference in a JSON file.",
+    "timezone": "America/Chicago",
+    "startDate": "2026-04-16",
+    "endDate": "2026-04-17",
+    "url": "https://example.com/sample-conf",
+    "venue": {
+      "name": "Navy Pier",
+      "address": "600 E Grand Ave",
+      "city": "Chicago",
+      "region": "IL",
+      "country": "US"
+    }
+  },
+  "theme": {
+    "accent": "#FF6A00",
+    "primary": "#1C1C1E",
+    "secondary": "#8E8E93",
+    "background": "#F2F2F7",
+    "surface": "#FFFFFF",
+    "onAccent": "#FFFFFF",
+    "preferredColorScheme": "system"
+  },
+  "tracks": [
+    { "id": "platform", "name": "Platform", "color": "#007AFF" },
+    { "id": "craft", "name": "Craft", "color": "#34C759" }
+  ],
+  "rooms": [
+    { "id": "main", "name": "Main Stage", "floor": "1", "capacity": 800 },
+    { "id": "lab", "name": "Lab", "floor": "2", "capacity": 120 }
+  ],
+  "speakers": [
+    {
+      "id": "vince-davis",
+      "name": "Vince Davis",
+      "title": "Lead iOS Engineer",
+      "company": "United",
+      "bio": "Builds conference apps, App Intents, and Live Activities. Speaks on Apple platforms.",
+      "photoURL": null,
+      "social": [
+        { "platform": "x", "url": "https://x.com/VinceDavis" },
+        { "platform": "github", "url": "https://github.com/vinced45" }
+      ]
+    },
+    {
+      "id": "guest-speaker",
+      "name": "Ada Example",
+      "title": "Designer",
+      "company": "Independent",
+      "bio": "Designs interfaces that feel inevitable.",
+      "photoURL": null,
+      "social": []
+    }
+  ],
+  "sessions": [
+    {
+      "id": "opening-keynote",
+      "title": "Opening Keynote",
+      "synopsis": "Why a conference app should fall out of a JSON file instead of a six-week rewrite.",
+      "startTime": "2026-04-16T09:00:00-05:00",
+      "endTime": "2026-04-16T10:00:00-05:00",
+      "speakerIDs": ["vince-davis"],
+      "trackID": "platform",
+      "roomID": "main",
+      "kind": "keynote"
+    },
+    {
+      "id": "intents-lab",
+      "title": "App Intents that actually ship",
+      "synopsis": "Entities, queries, and the shortcuts people will tap the morning of the conference.",
+      "startTime": "2026-04-16T10:30:00-05:00",
+      "endTime": "2026-04-16T11:20:00-05:00",
+      "speakerIDs": ["vince-davis"],
+      "trackID": "platform",
+      "roomID": "lab",
+      "kind": "workshop"
+    },
+    {
+      "id": "layout-talk",
+      "title": "One manifest, every size class",
+      "synopsis": "iPhone tabs, iPad split, Watch next-up — same document.",
+      "startTime": "2026-04-16T13:00:00-05:00",
+      "endTime": "2026-04-16T13:40:00-05:00",
+      "speakerIDs": ["guest-speaker", "vince-davis"],
+      "trackID": "craft",
+      "roomID": "main",
+      "kind": "talk"
+    },
+    {
+      "id": "day-two",
+      "title": "What organizers still have to do",
+      "synopsis": "Colors, speakers, rooms. That is the whole job.",
+      "startTime": "2026-04-17T09:30:00-05:00",
+      "endTime": "2026-04-17T10:10:00-05:00",
+      "speakerIDs": ["guest-speaker"],
+      "trackID": "craft",
+      "roomID": "main",
+      "kind": "talk"
+    }
+  ]
+}
