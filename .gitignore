@@ -1,5 +1,5 @@
 .DS_Store
-/.build
+.build/
 /Packages
 xcuserdata/
 DerivedData/
@@ -9,3 +9,4 @@ DerivedData/
 *.xcodeproj
 *.xcworkspace
 !Examples/**/*.xcodeproj
+Integration/ConferenceKitAsk/Package.resolved

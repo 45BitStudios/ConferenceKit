@@ -16,7 +16,7 @@ let package = Package(
         .library(name: "ConferenceKitAskLink", targets: ["ConferenceKitAskLink"])
     ],
     dependencies: [
-        .package(path: "../.."),
+        .package(name: "ConferenceKit", path: "../.."),
         .package(url: "https://github.com/45BitStudios/AskKit.git", branch: "main")
     ],
     targets: [
