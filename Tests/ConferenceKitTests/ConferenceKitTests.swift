@@ -52,7 +52,8 @@ import Testing
 @Test func searchFindsSpeakerAndTrack() async throws {
     let manifest = try await ConferenceLoader().load(.sample)
     let matches = ConferenceSearch.sessions(in: manifest, matching: SessionFilter(query: "Ada"))
-    #expect(matches.map(\.id) == ["layout-talk"])
+    // Ada Example speaks in both sample sessions.
+    #expect(matches.map(\.id) == ["layout-talk", "day-two"])
     let workshops = ConferenceSearch.sessions(in: manifest, matching: SessionFilter(kind: .workshop))
     #expect(workshops.map(\.id) == ["intents-lab"])
 }
@@ -164,7 +165,7 @@ import Testing
     let takenAt = session.startTime.addingTimeInterval(12 * 60 + 4)
     let note = store.add(body: "Ask the model for a title", session: session, kind: .timestamp, now: takenAt)
     _ = store.add(body: "Ship the workshop lab", session: session, kind: .takeaway, takeaway: true, now: takenAt.addingTimeInterval(60))
-    #expect(note.offsetFromStart == 12 * 60 + 4)
+    #expect(note.offsetFromStart == TimeInterval(12 * 60 + 4))
     let reloaded = NotesStore(conferenceID: "sg", directory: directory)
     #expect(reloaded.notes(for: "talk").count == 2)
     #expect(reloaded.search("title").count == 1)

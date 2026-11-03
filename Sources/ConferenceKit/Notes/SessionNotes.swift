@@ -74,7 +74,7 @@ public enum NotesMarkdown {
             let when = clock.rangeString(from: session.startTime, to: session.endTime)
             let room = session.roomID.flatMap { manifest.room(id: $0)?.name }
             let speakers = manifest.speakers(ids: session.speakerIDs).map(\.name).joined(separator: ", ")
-            var meta = [when, room, session.kind.label].compactMap { $0 }
+            let meta = [when, room, session.kind.label].compactMap { $0 }
             lines.append(meta.joined(separator: " · "))
             if !speakers.isEmpty { lines.append("Speakers: \(speakers)") }
             lines.append("")

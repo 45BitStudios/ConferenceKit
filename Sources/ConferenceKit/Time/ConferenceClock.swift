@@ -77,12 +77,10 @@ public struct ConferenceClock: Hashable, Sendable {
 
     public func dayString(_ date: Date, style: TimeDisplay = .conference) -> String {
         date.formatted(
-            Date.FormatStyle()
+            Date.FormatStyle(locale: .current, timeZone: zone(for: style))
                 .weekday(.abbreviated)
                 .month(.abbreviated)
                 .day()
-                .timeZone(zone(for: style))
-                .locale(Locale.current)
         )
     }
 
@@ -92,9 +90,7 @@ public struct ConferenceClock: Hashable, Sendable {
     }
 
     private func timeStyle(_ style: TimeDisplay) -> Date.FormatStyle {
-        Date.FormatStyle(date: .omitted, time: .shortened)
-            .timeZone(zone(for: style))
-            .locale(Locale.current)
+        Date.FormatStyle(date: .omitted, time: .shortened, locale: .current, timeZone: zone(for: style))
     }
 
     private func zone(for style: TimeDisplay) -> TimeZone {

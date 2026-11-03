@@ -127,8 +127,10 @@ public enum SessionProgress {
         return min(1, max(0, now.timeIntervalSince(session.startTime) / span))
     }
 
+    /// Whole seconds from the session start. `Date` arithmetic is not exact
+    /// at this scale, and note stamps only show seconds.
     public static func offset(from start: Date, to date: Date) -> TimeInterval {
-        date.timeIntervalSince(start)
+        date.timeIntervalSince(start).rounded()
     }
 
     public static func offsetLabel(_ offset: TimeInterval) -> String {

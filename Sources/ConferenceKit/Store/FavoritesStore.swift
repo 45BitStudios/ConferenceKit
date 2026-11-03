@@ -59,15 +59,15 @@ public final class FavoritesStore {
         sessions.filter { ids.contains($0.id) }.sorted { $0.startTime < $1.startTime }
     }
 
-    public static func sessionKey(conferenceID: String) -> String {
+    nonisolated public static func sessionKey(conferenceID: String) -> String {
         "conferencekit.favorites.\(conferenceID)"
     }
 
-    public static func speakerKey(conferenceID: String) -> String {
+    nonisolated public static func speakerKey(conferenceID: String) -> String {
         "conferencekit.speakerFavorites.\(conferenceID)"
     }
 
-    public static func readSessionIDs(conferenceID: String, defaults: UserDefaults) -> Set<String> {
+    nonisolated public static func readSessionIDs(conferenceID: String, defaults: UserDefaults) -> Set<String> {
         Set(defaults.stringArray(forKey: sessionKey(conferenceID: conferenceID)) ?? [])
     }
 

@@ -6,8 +6,8 @@ public actor ConferenceCatalog {
     public static let shared = ConferenceCatalog()
 
     private var manifest: ConferenceManifest?
-    private var favoriteSessionIDs: Set<String> = []
-    private var favoriteSpeakerIDs: Set<String> = []
+    private var storedFavoriteSessionIDs: Set<String> = []
+    private var storedFavoriteSpeakerIDs: Set<String> = []
 
     public func update(
         manifest: ConferenceManifest,
@@ -15,13 +15,13 @@ public actor ConferenceCatalog {
         favoriteSpeakerIDs: Set<String>
     ) {
         self.manifest = manifest
-        self.favoriteSessionIDs = favoriteSessionIDs
-        self.favoriteSpeakerIDs = favoriteSpeakerIDs
+        storedFavoriteSessionIDs = favoriteSessionIDs
+        storedFavoriteSpeakerIDs = favoriteSpeakerIDs
     }
 
     public func updateFavorites(sessions: Set<String>, speakers: Set<String>) {
-        favoriteSessionIDs = sessions
-        favoriteSpeakerIDs = speakers
+        storedFavoriteSessionIDs = sessions
+        storedFavoriteSpeakerIDs = speakers
     }
 
     public func current() -> ConferenceManifest? {
@@ -29,17 +29,17 @@ public actor ConferenceCatalog {
     }
 
     public func favoriteSessionIDs() -> Set<String> {
-        favoriteSessionIDs
+        storedFavoriteSessionIDs
     }
 
     public func favoriteSpeakerIDs() -> Set<String> {
-        favoriteSpeakerIDs
+        storedFavoriteSpeakerIDs
     }
 
     /// Test and intent helper. Production UI publishes through the store.
     public func reset() {
         manifest = nil
-        favoriteSessionIDs = []
-        favoriteSpeakerIDs = []
+        storedFavoriteSessionIDs = []
+        storedFavoriteSpeakerIDs = []
     }
 }
