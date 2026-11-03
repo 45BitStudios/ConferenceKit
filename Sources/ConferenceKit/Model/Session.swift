@@ -10,6 +10,12 @@ public struct Session: Codable, Hashable, Identifiable, Sendable {
     public var trackID: String?
     public var roomID: String?
     public var kind: SessionKind
+    /// Optional video or feedback URL.
+    public var recordingURL: URL?
+    /// Optional slides or session link shown in the laptop-mode stage.
+    public var slidesURL: URL?
+    /// Free-form level such as "Beginner". Omitted when the organizer has none.
+    public var level: String?
 
     public init(
         id: String,
@@ -20,7 +26,10 @@ public struct Session: Codable, Hashable, Identifiable, Sendable {
         speakerIDs: [String] = [],
         trackID: String? = nil,
         roomID: String? = nil,
-        kind: SessionKind = .talk
+        kind: SessionKind = .talk,
+        recordingURL: URL? = nil,
+        slidesURL: URL? = nil,
+        level: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -31,6 +40,9 @@ public struct Session: Codable, Hashable, Identifiable, Sendable {
         self.trackID = trackID
         self.roomID = roomID
         self.kind = kind
+        self.recordingURL = recordingURL
+        self.slidesURL = slidesURL
+        self.level = level
     }
 
     public var duration: Duration {
@@ -43,6 +55,13 @@ public struct Session: Codable, Hashable, Identifiable, Sendable {
 
     public func isUpcoming(at date: Date = .now) -> Bool {
         startTime > date
+    }
+
+    public func contains(_ query: String) -> Bool {
+        let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return true }
+        let fields: [String?] = [title, synopsis, level, kind.label]
+        return fields.contains { $0?.localizedStandardContains(needle) == true }
     }
 }
 
@@ -68,6 +87,20 @@ public enum SessionKind: String, Codable, Hashable, Sendable, CaseIterable {
         case .meal: "Break"
         case .social: "Social"
         case .other: "Session"
+        }
+    }
+
+    public var systemImage: String {
+        switch self {
+        case .keynote: "sparkles"
+        case .talk: "bubble.left.and.bubble.right"
+        case .workshop: "hammer"
+        case .panel: "person.3"
+        case .lightning: "bolt"
+        case .breakout: "rectangle.split.2x1"
+        case .meal: "cup.and.saucer"
+        case .social: "party.popper"
+        case .other: "calendar"
         }
     }
 }

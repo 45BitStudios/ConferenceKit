@@ -13,7 +13,10 @@
       "address": "600 E Grand Ave",
       "city": "Chicago",
       "region": "IL",
-      "country": "US"
+      "country": "US",
+      "latitude": 41.8917,
+      "longitude": -87.6043,
+      "directions": "Enter from the east promenade. The main stage is on the first floor."
     }
   },
   "theme": {
@@ -66,7 +69,8 @@
       "speakerIDs": ["vince-davis"],
       "trackID": "platform",
       "roomID": "main",
-      "kind": "keynote"
+      "kind": "keynote",
+      "slidesURL": "https://example.com/sample-conf/slides/opening"
     },
     {
       "id": "intents-lab",
@@ -101,5 +105,47 @@
       "roomID": "main",
       "kind": "talk"
     }
-  ]
+  ],
+  "sponsors": [
+    {
+      "id": "northwind",
+      "name": "Northwind",
+      "tier": "title",
+      "url": "https://example.com/northwind",
+      "blurb": "Title sponsor."
+    },
+    {
+      "id": "lumen",
+      "name": "Lumen Lab",
+      "tier": "community",
+      "blurb": "Community sponsor."
+    }
+  ],
+  "organizers": [
+    {
+      "id": "sample-team",
+      "name": "Sample Conf Team",
+      "role": "Organizer",
+      "url": "https://example.com/sample-conf",
+      "bio": "A small team that ships the schedule as JSON."
+    }
+  ],
+  "announcements": [
+    {
+      "id": "doors",
+      "title": "Doors at 8:30",
+      "body": "Coffee is on the first floor.",
+      "postedAt": "2026-04-01T15:00:00Z"
+    }
+  ],
+  "codeOfConduct": {
+    "summary": "Be kind. Harassment ends the conversation and the ticket.",
+    "url": "https://example.com/sample-conf/conduct",
+    "contactEmail": "conduct@example.com"
+  },
+  "wifi": {
+    "networkName": "SampleConf",
+    "password": "talks-2026",
+    "notes": "The lab network is SampleConf-Lab."
+  }
 }

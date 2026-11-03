@@ -34,7 +34,7 @@ public struct ConferenceTheme: Codable, Hashable, Sendable {
     public var surfaceColor: Color { Color(hex: surface) ?? fallbackSurface }
 
     private var fallbackBackground: Color {
-        #if canImport(UIKit) && !os(watchOS)
+        #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
         Color(uiColor: .systemBackground)
         #elseif canImport(AppKit) && !os(watchOS)
         Color(nsColor: .windowBackgroundColor)
@@ -44,7 +44,7 @@ public struct ConferenceTheme: Codable, Hashable, Sendable {
     }
 
     private var fallbackSurface: Color {
-        #if canImport(UIKit) && !os(watchOS)
+        #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
         Color(uiColor: .secondarySystemBackground)
         #elseif canImport(AppKit) && !os(watchOS)
         Color(nsColor: .controlBackgroundColor)
