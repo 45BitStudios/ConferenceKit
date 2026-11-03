@@ -19,7 +19,7 @@ Laptop mode is the horizontal fold: the bottom half lies flat like a keyboard de
 | Book | Active division taller than it is wide | Schedule on one side of the crease, session on the other (`ArrangementView` split on the horizontal axis when the window is wide). |
 | **Laptop** | Active division wider than it is tall | **Top:** live session (title, speaker photos, room, time remaining, progress, next session, slides or link). **Bottom:** the notes editor. |
 
-Follow Live advances the stage and the notes session when the current one ends. Opening a specific session pins notes there until Follow Live is turned back on. The hinge angle only tilts the title a few degrees.
+Follow Live is a switch the person turns on. It is stored in `UserDefaults` and defaults to off. While it is on, the stage and the open notes move to the next session when the current one ends. Opening a session does not flip the switch. The hinge angle only tilts the title a few degrees.
 
 Notes are per session, stored as JSON plus image files (app group when `ConferenceKitAppGroup` is set, otherwise Application Support). They are searchable, timestamped from the session start, and export as Markdown grouped by conference day and session. `SessionNote` is an App Entity. Intents: Add Note to Current Session, Show Session Notes, Export Conference Notes.
 
@@ -56,7 +56,7 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 | Reserved regions | Implemented. Division band places laptop and book panes. Occlusion regions pad the live stage. |
 | Hinge | Implemented for a title tilt only. |
 | New windows | Implemented. Session and speaker `WindowGroup`s. On iOS the control is `UIWindowScene.ActivationAction`, which hides when a new window is unavailable (outer display). |
-| Scene accessory | Partial. Optional cover-display companion via `CameraCaptureAccessory`. It does not start the camera. The accessory stays unavailable until a capture session is active, which matches tech talk 111464. |
+| Scene accessory and slide camera | Implemented on iOS. Opt-in. Starts a rear `AVCaptureSession` after camera authorization and registers `CameraCaptureAccessory` while that session runs. The Slide button saves a still into the open session’s notes. Needs `NSCameraUsageDescription`. |
 | Vertical toolbar | System-owned. Toolbars use standard placements so iOS 27.1 can move them under the status bar. The kit does not pin controls to a screen edge. |
 | Apple Watch | Implemented. Now, schedule, saved, session notes as text. |
 | Apple TV | Implemented. Tabs and read-only notes. |
@@ -74,7 +74,7 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 | App Shortcuts template | Implemented. The host app target must declare the provider. The package includes `ConferenceAppShortcuts` and `ConferenceShortcutTemplate`. |
 | Widgets | Implemented for iOS, macOS, and watchOS. Up Next, Now, My Schedule, Countdown, Favorite (configurable), accessory families, watch corner complication, interactive favorite. |
 | Control widget | Implemented. iOS 18 Favorite Next control. |
-| AlarmKit | Implemented for iOS 26+ when the SDK has AlarmKit. Fixed alarms before favorited sessions, lead time, authorization. No countdown Live Activity. |
+| AlarmKit | Implemented, off by default. `setUseAlarmKit(true)` registers it. The entitlement is not approved, so the default reminder is a local notification. Fixed alarms only. No countdown Live Activity. |
 | Notification fallback | Implemented where UserNotifications exists. |
 | Calendar | Implemented. Write-only access on iOS and visionOS, full access on macOS, legacy request on watchOS. Drafts are pure and tested. tvOS has no EventKit. |
 
@@ -82,7 +82,7 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 
 | Feature | Why |
 | --- | --- |
-| AskKit | `https://github.com/45BitStudios/AskKit` returned 404. No other 45BitStudios AskKit source was readable, so nothing was wired against a guessed API. |
+| AskKit inside the iOS 17 package | AskKit supports every Apple platform at version 27 or later. SwiftPM rejects that dependency from a package whose deployment target is lower, so the root package does not link it. `ConferenceAskAnswers` answers speaker, room, notes, and favorites questions and is tested. `Integration/ConferenceKitAsk` links AskKit and builds the `AskAssistant` for an OS 27 host. |
 | Attendee messaging, meeting booking, people discovery | Whova and Grip. Needs accounts and a server. A JSON kit cannot do this honestly. |
 | Push from a server | Host infrastructure. Local alarms and notifications cover the on-device case. |
 | In-app video playback | Optional `recordingURL` opens out. A player, DRM, and offline video are a different product. |

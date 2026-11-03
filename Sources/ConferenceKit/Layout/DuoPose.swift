@@ -97,6 +97,20 @@ public struct FoldSplit: Hashable, Sendable {
 }
 
 /// Which session the laptop stage and its notes should follow.
+public enum FollowLivePreference {
+    public static let defaultsKey = "conferencekit.followLive"
+
+    /// Missing key stays off. The laptop stage does not advance until the person turns this on.
+    public static func load(from defaults: UserDefaults) -> Bool {
+        guard defaults.object(forKey: defaultsKey) != nil else { return false }
+        return defaults.bool(forKey: defaultsKey)
+    }
+
+    public static func save(_ enabled: Bool, to defaults: UserDefaults) {
+        defaults.set(enabled, forKey: defaultsKey)
+    }
+}
+
 public enum LiveSessionFollow {
     public static func sessionID(
         sessions: [Session],

@@ -200,6 +200,60 @@ import Testing
     await ConferenceCatalog.shared.reset()
 }
 
+@Test func alarmKitAndFollowLiveStayOffUntilChosen() {
+    let configuration = ConferenceKitConfiguration()
+    #expect(configuration.usesAlarmKit() == false)
+    configuration.setUseAlarmKit(true)
+    #expect(configuration.usesAlarmKit())
+    let defaults = UserDefaults(suiteName: "conferencekit-follow-\(UUID().uuidString)")!
+    #expect(FollowLivePreference.load(from: defaults) == false)
+    FollowLivePreference.save(true, to: defaults)
+    #expect(FollowLivePreference.load(from: defaults))
+}
+
+@Test func askAnswersScheduleNotesAndFavorites() {
+    let start = Date(timeIntervalSince1970: 1_800_000_000)
+    let vince = Speaker(id: "vince", name: "Vince Davis", bio: "SwiftUI")
+    let ada = Speaker(id: "ada", name: "Ada Example", bio: "Design")
+    let lab = Room(id: "lab", name: "Lab")
+    let main = Room(id: "main", name: "Main Stage")
+    let keynote = Session(id: "keynote", title: "Opening", synopsis: "", startTime: start, endTime: start.addingTimeInterval(3600), speakerIDs: ["vince"], roomID: "main")
+    let workshop = Session(id: "lab-talk", title: "Intents lab", synopsis: "", startTime: start.addingTimeInterval(5400), endTime: start.addingTimeInterval(9000), speakerIDs: ["vince"], roomID: "lab", kind: .workshop)
+    let dayTwo = Session(id: "ada-talk", title: "Layout", synopsis: "", startTime: start.addingTimeInterval(86_400), endTime: start.addingTimeInterval(90_000), speakerIDs: ["ada"], roomID: "main")
+    let manifest = ConferenceManifest(
+        conference: ConferenceInfo(id: "sg", name: "iOS Conf SG", timezone: "Asia/Singapore", startDate: "2027-01-21", endDate: "2027-01-22"),
+        rooms: [lab, main],
+        speakers: [vince, ada],
+        sessions: [keynote, workshop, dayTwo]
+    )
+    let duringKeynote = start.addingTimeInterval(600)
+    let catalog = ConferenceAskCatalog(
+        manifest: manifest,
+        notes: [
+            SessionNote(sessionID: "keynote", conferenceID: "sg", body: "Ship the lab", createdAt: duringKeynote, kind: .takeaway, isTakeaway: true, offsetFromStart: 600)
+        ],
+        favoriteSessionIDs: ["lab-talk"],
+        now: duringKeynote
+    )
+    let speaking = ConferenceAskAnswers.reply(utterance: "when is Ada speaking?", catalog: catalog)
+    #expect(speaking.kind == .whenSpeaking)
+    #expect(speaking.spoken.contains("Ada Example"))
+    #expect(speaking.spoken.contains("Layout"))
+    let room = ConferenceAskAnswers.reply(utterance: "what's next in the lab?", catalog: catalog)
+    #expect(room.kind == .nextInRoom)
+    #expect(room.spoken.contains("Intents lab"))
+    #expect(room.spoken.contains("Lab"))
+    let notes = ConferenceAskAnswers.reply(utterance: "summarize my notes from day 1", catalog: catalog)
+    #expect(notes.kind == .summarizeNotes)
+    #expect(notes.spoken.contains("Ship the lab"))
+    #expect(notes.spoken.contains("Takeaway"))
+    let saved = ConferenceAskAnswers.reply(utterance: "what did I save?", catalog: catalog)
+    #expect(saved.kind == .favorites)
+    #expect(saved.spoken.contains("Intents lab"))
+    let dayTwoNotes = ConferenceAskAnswers.reply(utterance: "summarize my notes from day 2", catalog: catalog)
+    #expect(dayTwoNotes.spoken.contains("don’t have notes"))
+}
+
 @Test func validationReportsBrokenReferences() {
     let manifest = ConferenceManifest(
         conference: ConferenceInfo(id: "x", name: "X", timezone: "Not/AZone", startDate: "2027-01-20", endDate: "2027-01-20"),

@@ -11,14 +11,33 @@ public final class ConferenceKitConfiguration: @unchecked Sendable {
     private let lock = NSLock()
     private var appGroupIdentifier: String?
     private var cacheDirectoryOverride: URL?
+    /// AlarmKit stays off until a host opts in. The entitlement is not approved.
+    private var useAlarmKit = false
 
-    public func configure(appGroupIdentifier: String?, cacheDirectory: URL? = nil) {
+    /// `appGroupIdentifier` nil keeps the standard container and `UserDefaults.standard`.
+    /// There is no built-in group id.
+    public func configure(appGroupIdentifier: String?, cacheDirectory: URL? = nil, useAlarmKit: Bool? = nil) {
         lock.lock()
         self.appGroupIdentifier = appGroupIdentifier
         if let cacheDirectory {
             cacheDirectoryOverride = cacheDirectory
         }
+        if let useAlarmKit {
+            self.useAlarmKit = useAlarmKit
+        }
         lock.unlock()
+    }
+
+    public func setUseAlarmKit(_ enabled: Bool) {
+        lock.lock()
+        useAlarmKit = enabled
+        lock.unlock()
+    }
+
+    public func usesAlarmKit() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return useAlarmKit
     }
 
     public func resolvedAppGroupIdentifier() -> String? {

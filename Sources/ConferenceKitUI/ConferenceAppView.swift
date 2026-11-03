@@ -26,13 +26,18 @@ public struct ConferenceAppView: View {
             .modifier(HingeTilt(tilt: $hingeTilt))
             .conferenceCoverCompanion(
                 enabled: Binding(get: { router.coverCompanionEnabled }, set: { router.coverCompanionEnabled = $0 }),
-                available: Binding(get: { router.coverCompanionAvailable }, set: { router.coverCompanionAvailable = $0 })
+                available: Binding(get: { router.coverCompanionAvailable }, set: { router.coverCompanionAvailable = $0 }),
+                title: coverTitle
             )
             .task {
+                router.followLive = FollowLivePreference.load(from: ConferenceKitConfiguration.shared.resolvedDefaults())
                 ConferenceRuntime.shared.store = store
                 ConferenceIntentsBootstrap.prepare()
                 await store.load()
                 await ConferenceIntentsBootstrap.didLoad(store)
+            }
+            .onChange(of: router.coverCompanionEnabled) { _, enabled in
+                Task { await updateSlideCapture(enabled) }
             }
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active, let id = store.manifest?.conference.id else { return }
@@ -154,7 +159,6 @@ public struct ConferenceAppView: View {
             router.openSession(id, push: push)
             if navigation.pendingShowsNotes {
                 router.showsNotes = true
-                router.followLive = false
             }
             navigation.pendingSessionID = nil
             navigation.pendingShowsNotes = false
@@ -162,6 +166,23 @@ public struct ConferenceAppView: View {
         if let id = navigation.pendingSpeakerID {
             router.openSpeaker(id, push: push)
             navigation.pendingSpeakerID = nil
+        }
+    }
+
+    private var coverTitle: String {
+        let id = router.selectedSessionID
+        return id.flatMap { store.session(id: $0)?.title } ?? store.liveSessions.first?.title ?? store.conferenceName
+    }
+
+    private func updateSlideCapture(_ enabled: Bool) async {
+        if enabled {
+            let started = await SlideCaptureController.shared.start()
+            if !started {
+                router.coverCompanionEnabled = false
+                router.statusMessage = SlideCaptureController.shared.statusMessage ?? "The camera could not start."
+            }
+        } else {
+            SlideCaptureController.shared.stop()
         }
     }
 

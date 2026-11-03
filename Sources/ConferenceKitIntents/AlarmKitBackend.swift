@@ -97,13 +97,21 @@ struct AlarmKitSessionBackend: SessionAlarmBackend {
 #endif
 
 public enum ConferenceIntentsBootstrap {
+    /// Registers AlarmKit only when `ConferenceKitConfiguration.usesAlarmKit()` is true.
+    /// The default path is a local notification. AlarmKit also needs the entitlement.
     @MainActor
     public static func prepare() {
+        guard ConferenceKitConfiguration.shared.usesAlarmKit() else {
+            SessionReminderCenter.shared.clearAlarmBackend()
+            return
+        }
         #if canImport(AlarmKit) && os(iOS)
         if #available(iOS 26.0, *) {
             SessionReminderCenter.shared.registerAlarmBackend(AlarmKitSessionBackend())
+            return
         }
         #endif
+        SessionReminderCenter.shared.clearAlarmBackend()
     }
 
     @MainActor

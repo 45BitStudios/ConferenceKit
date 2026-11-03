@@ -20,8 +20,9 @@ Duo layout APIs (`ArrangementView`, reserved regions, hinge, scene accessories) 
 | `ConferenceKitUI` | SwiftUI shells, including laptop mode. Depends on the intents product |
 | `ConferenceKitIntents` | App entities, intents, Spotlight, AlarmKit backend |
 | `ConferenceKitWidgets` | Widget views, timelines, and the iOS 18 control. Not built for tvOS or visionOS |
+| `ConferenceKitAsk` | Question answering over the schedule, notes, and favorites. Does not link AskKit |
 
-There is no AskKit product. `https://github.com/45BitStudios/AskKit` was not readable (HTTP 404) when this package was built.
+AskKit is a separate package, [45BitStudios/AskKit](https://github.com/45BitStudios/AskKit). It supports iOS, macOS, tvOS, watchOS, and visionOS, all at version 27 or later. SwiftPM will not let this package depend on it while ConferenceKit’s deployment targets stay on iOS 17, macOS 14, watchOS 10, tvOS 17, and visionOS 1. The adapter that builds an `AskAssistant` lives in `Integration/ConferenceKitAsk` (`ConferenceKitAskLink`). Add that package by path in an app whose deployment target is 27 or newer, next to AskKit. Questions such as “when is Ada speaking?”, “what’s next in the lab?”, and “summarize my notes from day 1” are answered by `ConferenceAskAnswers` in the core product, which the skills call. That part is what `swift test` covers.
 
 ## Host app
 
@@ -69,7 +70,14 @@ struct HostIntentsPackage: AppIntentsPackage {
 
 `ConferenceAppShortcuts` declares the App Shortcut phrases. If the app needs its own `AppShortcutsProvider`, copy the `AppShortcut(...)` entries from `Shortcuts.swift` into its `@AppShortcutsBuilder` body; the builder only accepts literal entries, not an array returned from another type.
 
-Call `ConferenceIntentsBootstrap.prepare()` yourself only if you are not using `ConferenceAppView`. The root view registers the AlarmKit backend and reindexes Spotlight after a load.
+Call `ConferenceIntentsBootstrap.prepare()` yourself only if you are not using `ConferenceAppView`. The root view reindexes Spotlight after a load. It registers AlarmKit only after `ConferenceKitConfiguration.shared.setUseAlarmKit(true)`.
+
+There is no hard-coded app group. Pass the id from the host, or set `ConferenceKitAppGroup` in the app and the widget extension. A nil id uses `UserDefaults.standard` and Application Support.
+
+```swift
+ConferenceKitConfiguration.shared.configure(appGroupIdentifier: nil)
+ConferenceKitConfiguration.shared.setUseAlarmKit(false)
+```
 
 ### Info.plist
 
@@ -77,11 +85,11 @@ Call `ConferenceIntentsBootstrap.prepare()` yourself only if you are not using `
 | --- | --- |
 | `NSCalendarsWriteOnlyAccessUsageDescription` | Adding a session, or all favorites, to Calendar. iOS 17 write-only access. |
 | `NSAlarmKitUsageDescription` | Alarms before favorited sessions on iOS 26+. |
-| `NSCameraUsageDescription` | Only if attendees photograph slides from the notes editor. |
+| `NSCameraUsageDescription` | Required to photograph a slide into the current session’s notes. The cover-display companion starts a rear-camera capture session. |
 | `ConferenceKitAppGroup` | App group id shared by the app and the widget extension. Same key in both Info.plists. |
 | `NSUserActivityTypes` | `studio45.conferencekit.open-session`, `studio45.conferencekit.open-speaker`. |
 
-AlarmKit also needs the AlarmKit capability. Apple reviews that entitlement. Without it, scheduling throws and the kit falls back to a local notification.
+AlarmKit is off by default. Favorites use a local notification. Turning on “Alarms before sessions” calls AlarmKit, which needs the AlarmKit capability. That entitlement is not approved. Without it, scheduling fails and the kit still falls back to the notification.
 
 ### Widget extension
 
@@ -128,7 +136,7 @@ Laptop mode is the signature layout. When the reserved division is a horizontal 
 - key takeaway
 - photo from the camera (iOS) or the photo library (iOS, Mac, visionOS)
 
-Follow Live moves the stage and the open notes to the next session when the current one ends. Opening a session from the schedule pins notes to that session until Follow Live is turned on again.
+Follow Live is a saved switch, off until someone turns it on (the laptop stage, the notes header, or Settings). While it is on, the stage and the open notes move to the next session when the current one ends. Opening a session does not change the switch.
 
 Book mode (a vertical crease) keeps the schedule and the session on opposite sides. A flat inner display, iPad, or Mac shows notes beside the session when the window is wide enough, and as a section on the session when it is not. The outer display and Apple Watch show notes on the session. Apple TV shows them read-only.
 
@@ -136,7 +144,7 @@ The hinge angle is only a slight tilt on the session title.
 
 New windows use `ConferenceSessionScene` and `ConferenceSpeakerScene`. The iOS button is a `UIWindowScene.ActivationAction`, so it disappears on the outer display, where new windows are not allowed.
 
-Settings has an opt-in “Outer display companion”. It registers a `CameraCaptureAccessory` for the cover display and does **not** start the camera. Tech talk 111464 only shows that accessory while a capture session is running.
+Settings has an opt-in “Outer display companion”. On iOS it asks for camera permission, starts a rear `AVCaptureSession`, and registers a `CameraCaptureAccessory` so the cover display can show the session title. The Slide button writes a still into the open session’s notes. The accessory is only attached while that capture session is running, which is what tech talk 111464 requires. Add `NSCameraUsageDescription`.
 
 Docs used for this layout:
 
@@ -156,6 +164,7 @@ Sources/ConferenceKit/          models, loader, store, notes, clock, reminders
 Sources/ConferenceKitUI/        shells, laptop mode, session and info screens
 Sources/ConferenceKitIntents/   entities, intents, Spotlight, AlarmKit
 Sources/ConferenceKitWidgets/   timelines and widget views
+Integration/ConferenceKitAsk/   optional AskKit package, OS 27+
 Tests/ConferenceKitTests/       Swift Testing
 docs/FeatureMatrix.md
 schema/conference.schema.json
@@ -163,6 +172,6 @@ schema/conference.schema.json
 
 ## Tests
 
-`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, and entity queries.
+`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, and the Ask answers.
 
-This package was written on Linux, where `xcodebuild` and the Apple frameworks are not available. Nothing here was compile-checked. The matrix in `docs/FeatureMatrix.md` is the list of what is implemented versus deliberately left out.
+Xcode 27.2 already built the previous head (880385a) for iOS, iOS Simulator, macOS, watchOS, tvOS, and visionOS, and `swift test` passed. This follow-up was not compiled here. The matrix in `docs/FeatureMatrix.md` is the list of what is implemented versus deliberately left out.

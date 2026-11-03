@@ -327,10 +327,11 @@ struct LiveSessionStage: View {
                             .background(store.theme.accentColor.opacity(0.2), in: Capsule())
                         Spacer()
                         Button {
-                            router.followLive.toggle()
+                            router.setFollowLive(!router.followLive)
                         } label: {
                             Label(router.followLive ? "Following" : "Follow live", systemImage: "dot.radiowaves.left.and.right")
                         }
+                        .accessibilityAddTraits(router.followLive ? .isSelected : [])
                         .buttonStyle(.bordered)
                     }
                     Text(session.title)

@@ -41,6 +41,12 @@ public final class SessionReminderCenter: @unchecked Sendable {
         lock.unlock()
     }
 
+    public func clearAlarmBackend() {
+        lock.lock()
+        backend = nil
+        lock.unlock()
+    }
+
     public func alarmBackend() -> (any SessionAlarmBackend)? {
         lock.lock()
         defer { lock.unlock() }

@@ -198,8 +198,8 @@ struct LaptopShell: View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let sessionID = LiveSessionFollow.sessionID(
                 sessions: store.sessions,
-                pinnedID: router.showsNotes ? router.selectedSessionID : nil,
-                followLive: router.followLive || !router.showsNotes,
+                pinnedID: router.selectedSessionID,
+                followLive: router.followLive,
                 now: context.date
             )
             DuoPanes(pose: .laptop, division: division, container: container) {
@@ -216,13 +216,16 @@ struct LaptopShell: View {
                         HStack {
                             Button {
                                 router.showsNotes = false
-                                router.followLive = true
                             } label: {
                                 Label("Schedule", systemImage: "calendar")
                             }
                             Spacer()
-                            Text("Notes")
-                                .font(.headline)
+                            Button {
+                                router.setFollowLive(!router.followLive)
+                            } label: {
+                                Label(router.followLive ? "Following" : "Follow live", systemImage: "dot.radiowaves.left.and.right")
+                            }
+                            .accessibilityAddTraits(router.followLive ? .isSelected : [])
                         }
                         .padding(.horizontal)
                         .padding(.top, 8)
@@ -278,14 +281,19 @@ private extension View {
 
 extension View {
     @ViewBuilder
-    func conferenceCoverCompanion(enabled: Binding<Bool>, available: Binding<Bool>) -> some View {
+    func conferenceCoverCompanion(enabled: Binding<Bool>, available: Binding<Bool>, title: String) -> some View {
         #if os(iOS)
-        if #available(iOS 27.1, *) {
+        if #available(iOS 27.1, *), enabled.wrappedValue {
             sceneAccessory {
                 CameraCaptureAccessory(isEnabled: enabled) {
-                    Label("Live session", systemImage: "dot.radiowaves.left.and.right")
-                        .font(.headline)
-                        .padding()
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(title.isEmpty ? "Slide photo" : title)
+                            .font(.headline)
+                        Text("Photographing a slide")
+                            .font(.subheadline)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
                 }
                 .onAvailabilityChange { available.wrappedValue = $0 }
             }

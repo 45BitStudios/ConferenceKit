@@ -15,7 +15,8 @@ let package = Package(
         .library(name: "ConferenceKit", targets: ["ConferenceKit"]),
         .library(name: "ConferenceKitUI", targets: ["ConferenceKitUI"]),
         .library(name: "ConferenceKitIntents", targets: ["ConferenceKitIntents"]),
-        .library(name: "ConferenceKitWidgets", targets: ["ConferenceKitWidgets"])
+        .library(name: "ConferenceKitWidgets", targets: ["ConferenceKitWidgets"]),
+        .library(name: "ConferenceKitAsk", targets: ["ConferenceKitAsk"])
     ],
     targets: [
         .target(
@@ -38,6 +39,11 @@ let package = Package(
         .target(
             name: "ConferenceKitWidgets",
             dependencies: ["ConferenceKit", "ConferenceKitIntents"]
+        ),
+        .target(
+            name: "ConferenceKitAsk",
+            dependencies: ["ConferenceKit"],
+            path: "Integration/ConferenceKitAsk/Sources/ConferenceKitAskLink"
         ),
         .testTarget(
             name: "ConferenceKitTests",

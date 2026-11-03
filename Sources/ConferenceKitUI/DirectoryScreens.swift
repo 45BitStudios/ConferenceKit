@@ -1,4 +1,7 @@
 import ConferenceKit
+#if os(iOS)
+import ConferenceKitIntents
+#endif
 import SwiftUI
 #if canImport(MapKit) && !os(watchOS) && !os(tvOS)
 import MapKit
@@ -322,6 +325,13 @@ struct SettingsScreen: View {
                     Text(style.label).tag(style)
                 }
             }
+            Toggle("Follow live session", isOn: Binding(
+                get: { router.followLive },
+                set: { router.setFollowLive($0) }
+            ))
+            Text("When this is on, laptop mode moves the stage and the open notes to the next session after the current one ends.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
             Toggle("Reminders for favorites", isOn: Binding(
                 get: { store.reminderPreferences.enabled },
                 set: { enabled in
@@ -343,8 +353,9 @@ struct SettingsScreen: View {
                 Text("30 minutes").tag(30.0 * 60)
             }
             #if os(iOS)
+            AlarmOptIn(store: store)
             Toggle("Outer display companion", isOn: $router.coverCompanionEnabled)
-            Text("Shows the live session on the cover display while a camera capture session is active. ConferenceKit does not turn the camera on.")
+            Text("Starts the camera and shows the session title on the cover display. The Slide button saves a photo into the open session’s notes. The host app needs NSCameraUsageDescription.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             #endif
@@ -357,3 +368,23 @@ struct SettingsScreen: View {
         .navigationTitle("Settings")
     }
 }
+
+#if os(iOS)
+private struct AlarmOptIn: View {
+    var store: ConferenceStore
+    @State private var useAlarms = false
+
+    var body: some View {
+        Toggle("Alarms before sessions", isOn: $useAlarms)
+            .onAppear { useAlarms = ConferenceKitConfiguration.shared.usesAlarmKit() }
+            .onChange(of: useAlarms) { _, enabled in
+                ConferenceKitConfiguration.shared.setUseAlarmKit(enabled)
+                ConferenceIntentsBootstrap.prepare()
+                Task { await ConferenceActions.syncReminders(store) }
+            }
+        Text("Off by default. AlarmKit needs an entitlement Apple has not approved for this app. Favorites use a notification until you turn this on.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+    }
+}
+#endif

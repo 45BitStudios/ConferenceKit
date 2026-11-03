@@ -69,7 +69,7 @@ final class ConferenceRouter {
     var selectedSessionID: String?
     var selectedSpeakerID: String?
     var showsNotes = false
-    var followLive = true
+    var followLive = false
     var day: Date?
     var trackID: String?
     var roomID: String?
@@ -77,10 +77,14 @@ final class ConferenceRouter {
     var coverCompanionEnabled = false
     var coverCompanionAvailable = false
 
+    func setFollowLive(_ on: Bool) {
+        followLive = on
+        FollowLivePreference.save(on, to: ConferenceKitConfiguration.shared.resolvedDefaults())
+    }
+
     func openSession(_ id: String, push: Bool) {
         selectedSessionID = id
         showsNotes = true
-        followLive = false
         section = .schedule
         if push { path.append(ConferenceRoute.session(id)) }
     }

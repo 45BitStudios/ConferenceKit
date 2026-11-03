@@ -77,6 +77,11 @@ struct NotesEditor: View {
                 action("Timestamp", systemImage: "clock.badge") { commit(kind: .timestamp) }
                 action("Takeaway", systemImage: "bookmark") { commit(kind: .takeaway, takeaway: true) }
                 action("Star", systemImage: "star") { star() }
+                if SlideCaptureController.shared.isRunning {
+                    action("Slide", systemImage: "camera.viewfinder") {
+                        Task { await captureSlide() }
+                    }
+                }
                 #if os(iOS)
                 if UIImagePickerController.isSourceTypeAvailable(.camera) {
                     action("Camera", systemImage: "camera") { showCamera = true }
@@ -126,6 +131,12 @@ struct NotesEditor: View {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, let session else { return }
         _ = notes?.add(body: text, session: session, kind: kind, starred: starred, takeaway: takeaway)
+        draft = ""
+    }
+
+    private func captureSlide() async {
+        guard let session, let data = await SlideCaptureController.shared.takePhoto() else { return }
+        _ = try? notes?.addPhoto(data: data, session: session, caption: draft.isEmpty ? "Slide" : draft)
         draft = ""
     }
 
