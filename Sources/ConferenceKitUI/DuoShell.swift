@@ -29,7 +29,7 @@ struct ContainerMeasure: ViewModifier {
         }
     }
 
-    static func readDivision(_ proxy: GeometryProxy) -> DivisionMeasurement {
+    nonisolated static func readDivision(_ proxy: GeometryProxy) -> DivisionMeasurement {
         #if os(iOS)
         if #available(iOS 27.1, *) {
             let regions = proxy.reservedRegions(kind: .division)

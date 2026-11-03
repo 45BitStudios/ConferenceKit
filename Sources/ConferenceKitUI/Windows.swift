@@ -28,6 +28,7 @@ enum ConferenceActivity {
     }
 }
 
+@MainActor
 enum ConferenceWindowRegistration {
     static var sessions = false
     static var speakers = false
@@ -35,8 +36,10 @@ enum ConferenceWindowRegistration {
 
 struct NewSessionWindowButton: View {
     var sessionID: String
+    #if os(macOS) || os(visionOS)
     @Environment(\.openWindow) private var openWindow
     @Environment(\.supportsMultipleWindows) private var supportsMultipleWindows
+    #endif
 
     var body: some View {
         #if os(iOS)
@@ -66,9 +69,9 @@ struct SessionActivationButton: UIViewRepresentable {
         configuration.imagePadding = 4
         let button = UIButton(configuration: configuration)
         let activity = ConferenceActivity.makeSession(sessionID)
-        let action = UIWindowScene.ActivationAction(configurationProvider: { _ in
+        let action = UIWindowScene.ActivationAction { _ in
             UIWindowScene.ActivationConfiguration(userActivity: activity)
-        })
+        }
         button.addAction(action, for: .primaryActionTriggered)
         button.accessibilityLabel = "New Window"
         return button
@@ -89,7 +92,7 @@ public struct ConferenceSessionScene: Scene {
 
     public var body: some Scene {
         WindowGroup(id: ConferenceSceneID.session, for: String.self) { $sessionID in
-            ConferenceSessionWindow(store: store, sessionID: sessionID.wrappedValue)
+            ConferenceSessionWindow(store: store, sessionID: sessionID)
         }
     }
 }
@@ -104,7 +107,7 @@ public struct ConferenceSpeakerScene: Scene {
 
     public var body: some Scene {
         WindowGroup(id: ConferenceSceneID.speaker, for: String.self) { $speakerID in
-            ConferenceSpeakerWindow(store: store, speakerID: speakerID.wrappedValue)
+            ConferenceSpeakerWindow(store: store, speakerID: speakerID)
         }
     }
 }
