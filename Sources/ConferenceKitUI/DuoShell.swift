@@ -283,7 +283,10 @@ extension View {
     @ViewBuilder
     func conferenceCoverCompanion(enabled: Binding<Bool>, available: Binding<Bool>, title: String) -> some View {
         #if os(iOS)
-        if #available(iOS 27.1, *), enabled.wrappedValue {
+        // Always attach the accessory and let `isEnabled` show or hide it. Branching on
+        // `enabled` here would swap the whole app subtree (and its state) on every toggle,
+        // and `onAvailabilityChange` could not report until the person turned it on.
+        if #available(iOS 27.1, *) {
             sceneAccessory {
                 CameraCaptureAccessory(isEnabled: enabled) {
                     VStack(alignment: .leading, spacing: 8) {
