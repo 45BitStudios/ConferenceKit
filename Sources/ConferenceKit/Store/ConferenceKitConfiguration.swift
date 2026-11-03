@@ -14,6 +14,9 @@ public final class ConferenceKitConfiguration: @unchecked Sendable {
     /// AlarmKit stays off until a host opts in. The entitlement is not approved.
     private var useAlarmKit = false
 
+    /// Hosts normally use `shared`; a separate instance is handy for tests and previews.
+    public init() {}
+
     /// `appGroupIdentifier` nil keeps the standard container and `UserDefaults.standard`.
     /// There is no built-in group id.
     public func configure(appGroupIdentifier: String?, cacheDirectory: URL? = nil, useAlarmKit: Bool? = nil) {
