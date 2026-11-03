@@ -110,7 +110,11 @@ struct DayStrip: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
+        #if os(watchOS) || os(tvOS)
+        .background(.ultraThinMaterial)
+        #else
         .background(.bar)
+        #endif
     }
 
     private func chip(_ title: String, day: Date?) -> some View {

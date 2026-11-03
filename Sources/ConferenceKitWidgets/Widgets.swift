@@ -5,7 +5,7 @@ import ConferenceKitIntents
 import SwiftUI
 import WidgetKit
 
-public struct ScheduleEntry: TimelineEntry {
+public struct ScheduleEntry: TimelineEntry, Sendable {
     public var date: Date
     public var conferenceName: String
     public var accentHex: String
@@ -237,8 +237,8 @@ public struct CountdownProvider: TimelineProvider {
 }
 
 public struct FavoriteWidgetConfiguration: WidgetConfigurationIntent {
-    public static var title: LocalizedStringResource = "Favorite"
-    public static var description = IntentDescription("Show a saved session or speaker.")
+    public static let title: LocalizedStringResource = "Favorite"
+    public static let description = IntentDescription("Show a saved session or speaker.")
 
     @Parameter(title: "Session")
     public var session: SessionEntity?
@@ -256,6 +256,14 @@ public struct FavoriteProvider: AppIntentTimelineProvider {
     public init() {}
 
     public func placeholder(in context: Context) -> ScheduleEntry { .placeholder }
+
+    #if os(watchOS)
+    /// watchOS has no widget configuration UI, so offer the unconfigured
+    /// intent, which shows the next saved session.
+    public func recommendations() -> [AppIntentRecommendation<FavoriteWidgetConfiguration>] {
+        [AppIntentRecommendation(intent: FavoriteWidgetConfiguration(), description: "Next Favorite")]
+    }
+    #endif
 
     public func snapshot(for configuration: FavoriteWidgetConfiguration, in context: Context) async -> ScheduleEntry {
         WidgetSchedule.favoriteEntry(sessionID: configuration.session?.id, speakerID: configuration.speaker?.id)

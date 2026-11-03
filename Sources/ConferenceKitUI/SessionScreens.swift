@@ -72,6 +72,28 @@ struct ScheduleList: View {
 
     @ViewBuilder
     private var filterMenu: some View {
+        #if os(watchOS)
+        // watchOS has no Menu; the same filters as pickers on a pushed list.
+        NavigationLink {
+            List {
+                Picker("Track", selection: Binding(get: { router.trackID }, set: { router.trackID = $0 })) {
+                    Text("All tracks").tag(String?.none)
+                    ForEach(store.tracks) { track in
+                        Text(track.name).tag(Optional(track.id))
+                    }
+                }
+                Picker("Room", selection: Binding(get: { router.roomID }, set: { router.roomID = $0 })) {
+                    Text("All rooms").tag(String?.none)
+                    ForEach(store.rooms) { room in
+                        Text(room.name).tag(Optional(room.id))
+                    }
+                }
+            }
+            .navigationTitle("Filter")
+        } label: {
+            Label("Filter", systemImage: "line.3.horizontal.decrease")
+        }
+        #else
         Menu {
             Button("All tracks") { router.trackID = nil }
             ForEach(store.tracks) { track in
@@ -85,6 +107,7 @@ struct ScheduleList: View {
         } label: {
             Label("Filter", systemImage: "line.3.horizontal.decrease")
         }
+        #endif
     }
 }
 

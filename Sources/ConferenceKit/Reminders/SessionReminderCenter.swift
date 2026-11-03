@@ -116,7 +116,7 @@ public final class SessionReminderCenter: @unchecked Sendable {
 
 enum NotificationReminderBackend {
     static func authorization() async -> ReminderAuthorization {
-        #if canImport(UserNotifications)
+        #if canImport(UserNotifications) && !os(tvOS)
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         switch settings.authorizationStatus {
         case .notDetermined: return .notDetermined
@@ -130,7 +130,7 @@ enum NotificationReminderBackend {
     }
 
     static func requestAuthorization() async -> ReminderAuthorization {
-        #if canImport(UserNotifications)
+        #if canImport(UserNotifications) && !os(tvOS)
         do {
             let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
             return granted ? .authorized : .denied
@@ -142,8 +142,9 @@ enum NotificationReminderBackend {
         #endif
     }
 
+    /// tvOS notifications can only badge, so reminders are unavailable there.
     static func schedule(plans: [ReminderPlan], conferenceName: String) async {
-        #if canImport(UserNotifications)
+        #if canImport(UserNotifications) && !os(tvOS)
         let center = UNUserNotificationCenter.current()
         for plan in plans {
             let content = UNMutableNotificationContent()
@@ -162,7 +163,7 @@ enum NotificationReminderBackend {
     }
 
     static func cancel(identifiers: [String]) async {
-        #if canImport(UserNotifications)
+        #if canImport(UserNotifications) && !os(tvOS)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
         #endif
     }

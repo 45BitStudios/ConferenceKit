@@ -74,7 +74,8 @@ public enum CalendarServiceError: LocalizedError, Sendable {
     }
 }
 
-#if canImport(EventKit) && !os(tvOS)
+// watchOS EventKit is read-only (no save), so Add to Calendar is iOS, macOS, and visionOS.
+#if canImport(EventKit) && !os(tvOS) && !os(watchOS)
 import EventKit
 
 public actor EventCalendarWriter {
@@ -112,16 +113,6 @@ public actor EventCalendarWriter {
         return try await store.requestWriteOnlyAccessToEvents()
         #elseif os(macOS)
         return try await store.requestFullAccessToEvents()
-        #elseif os(watchOS)
-        return try await withCheckedThrowingContinuation { continuation in
-            store.requestAccess(to: .event) { granted, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: granted)
-                }
-            }
-        }
         #else
         throw CalendarServiceError.unavailable
         #endif

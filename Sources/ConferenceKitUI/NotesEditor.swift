@@ -52,7 +52,7 @@ struct NotesEditor: View {
         .sheet(isPresented: $showCamera) {
             SlideCamera { data in
                 guard let session else { return }
-                try? notes?.addPhoto(data: data, session: session, caption: draft)
+                _ = try? notes?.addPhoto(data: data, session: session, caption: draft)
                 draft = ""
             }
         }
@@ -62,7 +62,7 @@ struct NotesEditor: View {
             guard let item, let session else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {
-                    try? notes?.addPhoto(data: data, session: session, caption: draft)
+                    _ = try? notes?.addPhoto(data: data, session: session, caption: draft)
                     draft = ""
                 }
                 photoItem = nil
@@ -100,6 +100,10 @@ struct NotesEditor: View {
         Text(draft.isEmpty ? "Notes are read-only on Apple TV." : draft)
             .font(.body)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+        #elseif os(watchOS)
+        TextField("Session note", text: $draft, axis: .vertical)
+            .font(.body)
             .padding()
         #else
         TextEditor(text: $draft)
