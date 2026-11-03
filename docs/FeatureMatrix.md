@@ -70,13 +70,27 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 | App enums | Implemented. Session kind, sponsor tier, reminder lead. |
 | Intents | Implemented. Open session, open speaker, what’s next, my schedule today, search, favorite, unfavorite, favorite next, add one or all favorites to Calendar, set reminder, add note, show notes, export notes. |
 | Assistant schema | Implemented for `system.search` on iOS, macOS, and visionOS. See the PR for the `criteria.term` assumption. |
-| Spotlight | Implemented. `IndexedEntity` on sessions and speakers, iOS 18 / macOS 15 / watchOS 11 / visionOS 2, not tvOS. |
+| Spotlight | Implemented for sessions and speakers. The Siri AI preview flag also indexes the conference, days, tracks, rooms, venue, sponsors, notes, and My Schedule. |
 | App Shortcuts template | Implemented. The host app target must declare the provider. The package includes `ConferenceAppShortcuts` and `ConferenceShortcutTemplate`. |
 | Widgets | Implemented for iOS, macOS, and watchOS. Up Next, Now, My Schedule, Countdown, Favorite (configurable), accessory families, watch corner complication, interactive favorite. |
 | Control widget | Implemented. iOS 18 Favorite Next control. |
 | AlarmKit | Implemented, off by default. `setUseAlarmKit(true)` registers it. The entitlement is not approved, so the default reminder is a local notification. Fixed alarms only. No countdown Live Activity. |
 | Notification fallback | Implemented where UserNotifications exists. |
 | Calendar | Implemented. Write-only access on iOS and visionOS, full access on macOS, legacy request on watchOS. Drafts are pure and tested. tvOS has no EventKit. |
+
+## Siri AI Developer Preview (opt-in, Xcode 27.3)
+
+Off unless `SIRI_AI_PREVIEW` is set. The default Xcode 27.2 build does not compile these symbols and does not change behavior. Platforms: iOS, iPadOS, macOS, visionOS 27.3. Development-signed builds and internal TestFlight only. Not the App Store or external testers.
+
+| Piece | Status |
+| --- | --- |
+| `@AppIntent(.tool)` for what’s next, find session, favorite, add note, show notes, export notes | In `SiriPreview.swift`, compiled only with the flag. |
+| Indexing keys and traits on the main entities, including favorites | Same file. `@ComputedProperty` / `@DeferredProperty` and `IndexedEntity` for the types that were not already indexed. |
+| `@AppEntity(.generable)` session search | `SessionQueryEntity`. |
+| Snippet cards | `SessionSnippetIntent` and `SpeakerSnippetIntent`. The card-view result type is inferred from the preview overview plus the earlier snippet intent API. |
+| Foreground context and Live Activity | Session screen sets a user activity and a Live Activity while the flag is on, so a note can attach to the session on screen. |
+| App skills | `plan-afternoon` and `recall-notes` markdown for the host’s `Skills.skillsbundle`. Skills guide Siri. They do not force tool order. |
+| Siri Evaluations | Sample file only. Not part of `swift test`. |
 
 ## Not in the kit
 

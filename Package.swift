@@ -1,6 +1,11 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
+// Siri AI Developer Preview (Xcode 27.3 / iOS 27.3 SDK) stays out of the default
+// build. To compile it, add this setting to ConferenceKitIntents and ConferenceKitUI:
+//   swiftSettings: [.define("SIRI_AI_PREVIEW")]
+// Xcode 27.2 does not have the macros, so leave the flag unset.
+
 let package = Package(
     name: "ConferenceKit",
     defaultLocalization: "en",

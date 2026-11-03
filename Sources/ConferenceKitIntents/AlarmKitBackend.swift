@@ -118,6 +118,9 @@ public enum ConferenceIntentsBootstrap {
     public static func didLoad(_ store: ConferenceStore) async {
         guard let manifest = store.manifest else { return }
         await ConferenceSpotlight.reindex(manifest)
+        #if SIRI_AI_PREVIEW
+        await ConferenceSiriPreviewIndex.reindex(manifest)
+        #endif
         _ = await SessionReminderCenter.shared.sync(
             manifest: manifest,
             favoriteIDs: store.favorites.ids,

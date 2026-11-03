@@ -146,6 +146,13 @@ struct SessionDetail: View {
         }
         .navigationTitle(session.kind.label)
         .toolbar { toolbar }
+        #if SIRI_AI_PREVIEW && os(iOS)
+        .siriSessionContext(
+            sessionID: session.id,
+            title: session.title,
+            room: store.roomName(for: session) ?? ""
+        )
+        #endif
     }
 
     @ViewBuilder

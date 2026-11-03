@@ -170,6 +170,22 @@ docs/FeatureMatrix.md
 schema/conference.schema.json
 ```
 
+## Siri AI Developer Preview
+
+The preview is iOS 27.3, iPadOS 27.3, macOS 27.3, and visionOS 27.3. It is not on watchOS or tvOS. Xcode 27.2 does not include the symbols, and `if #available(iOS 27.3, *)` still has to type-check them, so the adoption is compiled only when `SIRI_AI_PREVIEW` is set. The default package build does not set it. Behavior of the 27.2 build is unchanged.
+
+Enable it with Xcode 27.3 by adding `swiftSettings: [.define("SIRI_AI_PREVIEW")]` to the `ConferenceKitIntents` and `ConferenceKitUI` targets in `Package.swift`, then build a development-signed app. The preview works for development-signed builds and internal TestFlight testers. It does not work for external TestFlight testers or the App Store, and the API can still change.
+
+What that flag turns on:
+
+- `@AppIntent(.tool)` tools for what’s next, find session, favorite, add note, show notes, and export notes. Titles and parameter descriptions are written for the model.
+- Spotlight indexing for the conference, days, sessions, speakers, tracks, rooms, the venue, sponsors, notes, and My Schedule, plus `@ComputedProperty` / `@DeferredProperty` indexing on session, speaker, and note text.
+- A generable `SessionQueryEntity` (`@AppEntity(.generable)`) so a search can be filled from the request.
+- Branded snippet cards for a session or a speaker. The snippet result API is the part not shown as a full sample in the preview article.
+- A Live Activity and an `NSUserActivity` while a session is on screen, so “add a note: …” can use the foreground session without the app name.
+- App skills to copy into the host’s `Skills.skillsbundle`: `SiriPreview/Skills/plan-afternoon/SKILL.md` and `SiriPreview/Skills/recall-notes/SKILL.md`. One bundle per app target, name matching the folder, `name` and `description` only.
+- A Siri Evaluations sample at `SiriPreview/Evaluations/ConferenceSiriEvaluation.swift`. It is not in the package test target. Add it to a UI testing target signed by the same team, with the flag set. `SiriService.run(scenario:)` is from the Siri Evaluations docs.
+
 ## Tests
 
 `swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, and the Ask answers.
