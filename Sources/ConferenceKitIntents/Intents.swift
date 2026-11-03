@@ -3,9 +3,9 @@ import ConferenceKit
 import Foundation
 
 public struct OpenSessionIntent: OpenIntent {
-    public static var title: LocalizedStringResource = "Open Session"
-    public static var description = IntentDescription("Open a session in the conference app.")
-    public static var openAppWhenRun = true
+    public static let title: LocalizedStringResource = "Open Session"
+    public static let description = IntentDescription("Open a session in the conference app.")
+    public static let openAppWhenRun = true
 
     @Parameter(title: "Session")
     public var target: SessionEntity
@@ -28,9 +28,9 @@ public struct OpenSessionIntent: OpenIntent {
 }
 
 public struct OpenSpeakerIntent: OpenIntent {
-    public static var title: LocalizedStringResource = "Open Speaker"
-    public static var description = IntentDescription("Open a speaker bio.")
-    public static var openAppWhenRun = true
+    public static let title: LocalizedStringResource = "Open Speaker"
+    public static let description = IntentDescription("Open a speaker bio.")
+    public static let openAppWhenRun = true
 
     @Parameter(title: "Speaker")
     public var target: SpeakerEntity
@@ -53,8 +53,8 @@ public struct OpenSpeakerIntent: OpenIntent {
 }
 
 public struct WhatsNextIntent: AppIntent {
-    public static var title: LocalizedStringResource = "What's Next"
-    public static var description = IntentDescription("Report the live session, or the next one if nothing is on.")
+    public static let title: LocalizedStringResource = "What's Next"
+    public static let description = IntentDescription("Report the live session, or the next one if nothing is on.")
 
     @Parameter(title: "Favorites Only", default: false)
     public var favoritesOnly: Bool
@@ -90,9 +90,9 @@ public struct WhatsNextIntent: AppIntent {
 }
 
 public struct MyScheduleTodayIntent: AppIntent {
-    public static var title: LocalizedStringResource = "My Schedule Today"
-    public static var description = IntentDescription("List favorited sessions on today's conference day.")
-    public static var openAppWhenRun = true
+    public static let title: LocalizedStringResource = "My Schedule Today"
+    public static let description = IntentDescription("List favorited sessions on today's conference day.")
+    public static let openAppWhenRun = true
 
     public init() {}
 
@@ -113,9 +113,9 @@ public struct MyScheduleTodayIntent: AppIntent {
 }
 
 public struct SearchSessionsIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Search Sessions"
-    public static var description = IntentDescription("Find sessions, speakers, rooms, or tracks.")
-    public static var openAppWhenRun = true
+    public static let title: LocalizedStringResource = "Search Sessions"
+    public static let description = IntentDescription("Find sessions, speakers, rooms, or tracks.")
+    public static let openAppWhenRun = true
 
     @Parameter(title: "Query")
     public var query: String
@@ -146,8 +146,8 @@ public struct SearchSessionsIntent: AppIntent {
 }
 
 public struct SetSessionFavoriteIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Set Session Favorite"
-    public static var description = IntentDescription("Save or remove a session from My Schedule.")
+    public static let title: LocalizedStringResource = "Set Session Favorite"
+    public static let description = IntentDescription("Save or remove a session from My Schedule.")
 
     @Parameter(title: "Session")
     public var session: SessionEntity
@@ -174,9 +174,9 @@ public struct SetSessionFavoriteIntent: AppIntent {
 }
 
 public struct SetSessionFavoriteByIDIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Set Session Favorite by ID"
-    public static var description = IntentDescription("Save or remove a session. Used by widgets.")
-    public static var isDiscoverable: Bool = false
+    public static let title: LocalizedStringResource = "Set Session Favorite by ID"
+    public static let description = IntentDescription("Save or remove a session. Used by widgets.")
+    public static let isDiscoverable: Bool = false
 
     @Parameter(title: "Session ID")
     public var sessionID: String
@@ -202,8 +202,8 @@ public struct SetSessionFavoriteByIDIntent: AppIntent {
 }
 
 public struct FavoriteNextSessionIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Favorite Next Session"
-    public static var description = IntentDescription("Save the next session that has not started.")
+    public static let title: LocalizedStringResource = "Favorite Next Session"
+    public static let description = IntentDescription("Save the next session that has not started.")
 
     public init() {}
 
@@ -222,8 +222,8 @@ public struct FavoriteNextSessionIntent: AppIntent {
 }
 
 public struct UnfavoriteSessionIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Unfavorite Session"
-    public static var description = IntentDescription("Remove a session from My Schedule.")
+    public static let title: LocalizedStringResource = "Unfavorite Session"
+    public static let description = IntentDescription("Remove a session from My Schedule.")
 
     @Parameter(title: "Session")
     public var session: SessionEntity
@@ -246,8 +246,8 @@ public struct UnfavoriteSessionIntent: AppIntent {
 }
 
 public struct AddSessionToCalendarIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Add Session to Calendar"
-    public static var description = IntentDescription("Add one session to the default calendar.")
+    public static let title: LocalizedStringResource = "Add Session to Calendar"
+    public static let description = IntentDescription("Add one session to the default calendar.")
 
     @Parameter(title: "Session")
     public var session: SessionEntity
@@ -272,8 +272,8 @@ public struct AddSessionToCalendarIntent: AppIntent {
 }
 
 public struct AddFavoritesToCalendarIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Add My Schedule to Calendar"
-    public static var description = IntentDescription("Add every favorited session to the default calendar.")
+    public static let title: LocalizedStringResource = "Add My Schedule to Calendar"
+    public static let description = IntentDescription("Add every favorited session to the default calendar.")
 
     public init() {}
 
@@ -292,8 +292,8 @@ public struct AddFavoritesToCalendarIntent: AppIntent {
 }
 
 public struct SetSessionReminderIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Set Session Reminder"
-    public static var description = IntentDescription("Save a session and schedule a reminder before it starts.")
+    public static let title: LocalizedStringResource = "Set Session Reminder"
+    public static let description = IntentDescription("Save a session and schedule a reminder before it starts.")
 
     @Parameter(title: "Session")
     public var session: SessionEntity

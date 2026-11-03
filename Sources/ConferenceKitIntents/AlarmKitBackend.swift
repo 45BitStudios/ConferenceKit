@@ -21,9 +21,9 @@ public struct SessionAlarmMetadata: AlarmMetadata {
 
 @available(iOS 26.0, *)
 public struct OpenSessionFromAlarmIntent: LiveActivityIntent {
-    public static var title: LocalizedStringResource = "Open Session"
-    public static var description = IntentDescription("Open the session this alarm belongs to.")
-    public static var openAppWhenRun = true
+    public static let title: LocalizedStringResource = "Open Session"
+    public static let description = IntentDescription("Open the session this alarm belongs to.")
+    public static let openAppWhenRun = true
 
     @Parameter(title: "Session")
     public var sessionID: String
@@ -90,7 +90,7 @@ struct AlarmKitSessionBackend: SessionAlarmBackend {
 
     func cancel(alarmIDs: [UUID]) async {
         for id in alarmIDs {
-            try? await AlarmManager.shared.cancel(id: id)
+            try? AlarmManager.shared.cancel(id: id)
         }
     }
 }

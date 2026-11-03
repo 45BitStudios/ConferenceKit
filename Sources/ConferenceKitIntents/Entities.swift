@@ -5,9 +5,9 @@ import Foundation
 public enum SessionKindAppEnum: String, AppEnum {
     case keynote, talk, workshop, panel, lightning, breakout, meal, social, other
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session Kind")
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session Kind")
 
-    public static var caseDisplayRepresentations: [SessionKindAppEnum: DisplayRepresentation] = [
+    public static let caseDisplayRepresentations: [SessionKindAppEnum: DisplayRepresentation] = [
         .keynote: "Keynote",
         .talk: "Talk",
         .workshop: "Workshop",
@@ -31,9 +31,9 @@ public enum SessionKindAppEnum: String, AppEnum {
 public enum SponsorTierAppEnum: String, AppEnum {
     case title, diamond, gold, silver, community, other
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Sponsor Tier")
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Sponsor Tier")
 
-    public static var caseDisplayRepresentations: [SponsorTierAppEnum: DisplayRepresentation] = [
+    public static let caseDisplayRepresentations: [SponsorTierAppEnum: DisplayRepresentation] = [
         .title: "Title",
         .diamond: "Diamond",
         .gold: "Gold",
@@ -50,9 +50,9 @@ public enum ReminderLeadAppEnum: String, AppEnum {
     case fifteenMinutes
     case thirtyMinutes
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Reminder Lead Time")
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Reminder Lead Time")
 
-    public static var caseDisplayRepresentations: [ReminderLeadAppEnum: DisplayRepresentation] = [
+    public static let caseDisplayRepresentations: [ReminderLeadAppEnum: DisplayRepresentation] = [
         .atStart: "When it starts",
         .fiveMinutes: "5 minutes before",
         .tenMinutes: "10 minutes before",
@@ -76,8 +76,8 @@ public struct ConferenceEntity: AppEntity {
     public var name: String
     public var tagline: String?
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Conference")
-    public static var defaultQuery = ConferenceEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Conference")
+    public static let defaultQuery = ConferenceEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(name)", subtitle: tagline.map { "\($0)" } ?? "")
@@ -120,8 +120,8 @@ public struct DayEntity: AppEntity {
     public var id: String
     public var title: String
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Conference Day")
-    public static var defaultQuery = DayEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Conference Day")
+    public static let defaultQuery = DayEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(title)")
@@ -177,8 +177,8 @@ public struct SessionEntity: AppEntity {
     public var speakerNames: String
     public var kind: SessionKindAppEnum
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session")
-    public static var defaultQuery = SessionEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session")
+    public static let defaultQuery = SessionEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         let time = startTime.formatted(date: .abbreviated, time: .shortened)
@@ -253,8 +253,8 @@ public struct SpeakerEntity: AppEntity {
     public var affiliation: String
     public var bio: String
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Speaker")
-    public static var defaultQuery = SpeakerEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Speaker")
+    public static let defaultQuery = SpeakerEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(name)", subtitle: "\(affiliation)")
@@ -295,8 +295,8 @@ public struct TrackEntity: AppEntity {
     public var id: String
     public var name: String
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Track")
-    public static var defaultQuery = TrackEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Track")
+    public static let defaultQuery = TrackEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(name)")
@@ -336,8 +336,8 @@ public struct RoomEntity: AppEntity {
     public var name: String
     public var floor: String?
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Room")
-    public static var defaultQuery = RoomEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Room")
+    public static let defaultQuery = RoomEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(name)", subtitle: floor.map { "\($0)" } ?? "")
@@ -378,8 +378,8 @@ public struct VenueEntity: AppEntity {
     public var name: String
     public var address: String
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Venue")
-    public static var defaultQuery = VenueEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Venue")
+    public static let defaultQuery = VenueEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(name)", subtitle: "\(address)")
@@ -425,8 +425,8 @@ public struct SponsorEntity: AppEntity {
     public var tier: SponsorTierAppEnum
     public var blurb: String?
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Sponsor")
-    public static var defaultQuery = SponsorEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Sponsor")
+    public static let defaultQuery = SponsorEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(name)", subtitle: "\(tier.rawValue.capitalized)")

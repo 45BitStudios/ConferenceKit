@@ -24,9 +24,8 @@ enum IntentCatalog {
                 conferenceID: manifest.conference.id,
                 defaults: ConferenceKitConfiguration.shared.resolvedDefaults()
             )
-            if !stored.isEmpty || await ConferenceCatalog.shared.favoriteSessionIDs().isEmpty {
-                return stored
-            }
+            let cached = await ConferenceCatalog.shared.favoriteSessionIDs()
+            return stored.isEmpty ? cached : stored
         }
         return await ConferenceCatalog.shared.favoriteSessionIDs()
     }
@@ -104,7 +103,11 @@ enum FavoriteMutator {
     }
 
     static func reloadWidgets() {
-        #if canImport(WidgetKit) && !os(tvOS)
+        #if canImport(WidgetKit) && os(visionOS)
+        if #available(visionOS 26.0, *) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        #elseif canImport(WidgetKit) && !os(tvOS)
         WidgetCenter.shared.reloadAllTimelines()
         #endif
     }

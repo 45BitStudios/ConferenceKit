@@ -1,5 +1,6 @@
 import ConferenceKit
 import Foundation
+import AppIntents
 #if canImport(CoreSpotlight) && !os(tvOS)
 import CoreSpotlight
 

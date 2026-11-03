@@ -13,8 +13,8 @@ import Foundation
 @available(iOS 18.0, macOS 15.0, visionOS 2.0, *)
 @AppIntent(schema: .system.search)
 public struct ConferenceInAppSearchIntent: ShowInAppSearchResultsIntent {
-    public static var title: LocalizedStringResource = "Search Conference"
-    public static var searchScopes: [StringSearchScope] = [.general]
+    public static let title: LocalizedStringResource = "Search Conference"
+    public static let searchScopes: [StringSearchScope] = [.general]
 
     public var criteria: StringSearchCriteria
 

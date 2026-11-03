@@ -10,8 +10,8 @@ public struct SessionNoteEntity: AppEntity {
     public var isStarred: Bool
     public var isTakeaway: Bool
 
-    public static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session Note")
-    public static var defaultQuery = SessionNoteEntityQuery()
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session Note")
+    public static let defaultQuery = SessionNoteEntityQuery()
 
     public var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(title: "\(text)", subtitle: "\(sessionTitle)")
@@ -63,8 +63,8 @@ public struct SessionNoteEntityQuery: EntityQuery, EntityStringQuery {
 }
 
 public struct AddNoteToCurrentSessionIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Add Note to Current Session"
-    public static var description = IntentDescription("Save a note on the session that's on now, or the one open in the app.")
+    public static let title: LocalizedStringResource = "Add Note to Current Session"
+    public static let description = IntentDescription("Save a note on the session that's on now, or the one open in the app.")
 
     @Parameter(title: "Note")
     public var text: String
@@ -97,9 +97,9 @@ public struct AddNoteToCurrentSessionIntent: AppIntent {
 }
 
 public struct ShowSessionNotesIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Show Session Notes"
-    public static var description = IntentDescription("Open the notes for a session.")
-    public static var openAppWhenRun = true
+    public static let title: LocalizedStringResource = "Show Session Notes"
+    public static let description = IntentDescription("Open the notes for a session.")
+    public static let openAppWhenRun = true
 
     @Parameter(title: "Session")
     public var session: SessionEntity
@@ -126,8 +126,8 @@ public struct ShowSessionNotesIntent: AppIntent {
 }
 
 public struct ExportConferenceNotesIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Export Conference Notes"
-    public static var description = IntentDescription("Export every note as Markdown, grouped by day and session.")
+    public static let title: LocalizedStringResource = "Export Conference Notes"
+    public static let description = IntentDescription("Export every note as Markdown, grouped by day and session.")
 
     public init() {}
 

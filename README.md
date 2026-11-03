@@ -54,17 +54,20 @@ struct SampleConfApp: App {
 
 `ConferenceAppView(source: .sample)` loads the kit’s sample. `.remote(url)` caches JSON and refreshes it. `.manifest` uses a document you already decoded.
 
-App Shortcuts are scanned from the **app target**, not from a package. Add this type to the app:
+App Intents metadata is extracted from the **app target**. Include the package so its intents and entities are registered:
 
 ```swift
 import AppIntents
 import ConferenceKitIntents
 
-struct HostShortcuts: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] { ConferenceShortcutTemplate.shortcuts }
-    static var shortcutTileColor: ShortcutTileColor = .orange
+struct HostIntentsPackage: AppIntentsPackage {
+    static var includedPackages: [any AppIntentsPackage.Type] {
+        [ConferenceIntentsPackage.self]
+    }
 }
 ```
+
+`ConferenceAppShortcuts` declares the App Shortcut phrases. If the app needs its own `AppShortcutsProvider`, copy the `AppShortcut(...)` entries from `Shortcuts.swift` into its `@AppShortcutsBuilder` body; the builder only accepts literal entries, not an array returned from another type.
 
 Call `ConferenceIntentsBootstrap.prepare()` yourself only if you are not using `ConferenceAppView`. The root view registers the AlarmKit backend and reindexes Spotlight after a load.
 

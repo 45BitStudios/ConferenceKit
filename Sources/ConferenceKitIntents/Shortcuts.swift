@@ -1,20 +1,32 @@
 import AppIntents
 import Foundation
 
-/// Phrases the host app should register.
+/// Exposes this package's intents, entities, and queries to the host app.
 ///
-/// App Shortcuts are discovered from the application target. Link this
-/// product and declare a provider in the app:
+/// Add to the app target so its metadata extraction pulls in the package:
 ///
 /// ```swift
-/// struct HostShortcuts: AppShortcutsProvider {
-///     static var appShortcuts: [AppShortcut] { ConferenceShortcutTemplate.shortcuts }
-///     static var shortcutTileColor: ShortcutTileColor = .orange
+/// struct HostIntentsPackage: AppIntentsPackage {
+///     static var includedPackages: [any AppIntentsPackage.Type] {
+///         [ConferenceIntentsPackage.self]
+///     }
 /// }
 /// ```
+public struct ConferenceIntentsPackage: AppIntentsPackage {}
+
+/// App Shortcut phrases for the conference intents.
+///
+/// `AppShortcutsBuilder` needs literal `AppShortcut` expressions, so the list
+/// lives in `ConferenceAppShortcuts`. A host app that declares its own
+/// provider copies the entries it wants; `shortcuts` returns the same list for
+/// code that just needs the values.
 public enum ConferenceShortcutTemplate {
-    public static var shortcuts: [AppShortcut] {
-        [
+    public static var shortcuts: [AppShortcut] { ConferenceAppShortcuts.appShortcuts }
+}
+
+public struct ConferenceAppShortcuts: AppShortcutsProvider {
+    @AppShortcutsBuilder
+    public static var appShortcuts: [AppShortcut] {
             AppShortcut(
                 intent: WhatsNextIntent(),
                 phrases: [
@@ -23,7 +35,7 @@ public enum ConferenceShortcutTemplate {
                 ],
                 shortTitle: "What's Next",
                 systemImageName: "clock"
-            ),
+            )
             AppShortcut(
                 intent: OpenSessionIntent(),
                 phrases: [
@@ -32,7 +44,7 @@ public enum ConferenceShortcutTemplate {
                 ],
                 shortTitle: "Open Session",
                 systemImageName: "calendar"
-            ),
+            )
             AppShortcut(
                 intent: OpenSpeakerIntent(),
                 phrases: [
@@ -41,7 +53,7 @@ public enum ConferenceShortcutTemplate {
                 ],
                 shortTitle: "Open Speaker",
                 systemImageName: "person"
-            ),
+            )
             AppShortcut(
                 intent: MyScheduleTodayIntent(),
                 phrases: [
@@ -50,16 +62,16 @@ public enum ConferenceShortcutTemplate {
                 ],
                 shortTitle: "My Schedule",
                 systemImageName: "star"
-            ),
+            )
             AppShortcut(
                 intent: SearchSessionsIntent(),
                 phrases: [
-                    "Search \(\.$query) in \(.applicationName)",
-                    "Find a session in \(.applicationName)"
+                    "Find a session in \(.applicationName)",
+                    "Search sessions in \(.applicationName)"
                 ],
                 shortTitle: "Search Sessions",
                 systemImageName: "magnifyingglass"
-            ),
+            )
             AppShortcut(
                 intent: SetSessionFavoriteIntent(),
                 phrases: [
@@ -68,7 +80,7 @@ public enum ConferenceShortcutTemplate {
                 ],
                 shortTitle: "Favorite Session",
                 systemImageName: "star.fill"
-            ),
+            )
             AppShortcut(
                 intent: AddNoteToCurrentSessionIntent(),
                 phrases: [
@@ -77,7 +89,7 @@ public enum ConferenceShortcutTemplate {
                 ],
                 shortTitle: "Add Note",
                 systemImageName: "note.text"
-            ),
+            )
             AppShortcut(
                 intent: ShowSessionNotesIntent(),
                 phrases: [
@@ -85,7 +97,7 @@ public enum ConferenceShortcutTemplate {
                 ],
                 shortTitle: "Show Notes",
                 systemImageName: "note.text"
-            ),
+            )
             AppShortcut(
                 intent: ExportConferenceNotesIntent(),
                 phrases: [
@@ -94,11 +106,7 @@ public enum ConferenceShortcutTemplate {
                 shortTitle: "Export Notes",
                 systemImageName: "square.and.arrow.up"
             )
-        ]
     }
-}
 
-public struct ConferenceAppShortcuts: AppShortcutsProvider {
-    public static var appShortcuts: [AppShortcut] { ConferenceShortcutTemplate.shortcuts }
-    public static var shortcutTileColor: ShortcutTileColor = .orange
+    public static let shortcutTileColor: ShortcutTileColor = .orange
 }
