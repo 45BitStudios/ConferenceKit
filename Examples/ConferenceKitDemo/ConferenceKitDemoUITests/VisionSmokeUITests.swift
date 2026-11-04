@@ -45,6 +45,9 @@ final class VisionSmokeUITests: XCTestCase {
             log("open session: \(session.label)")
             session.tap(); sleep(3)
         } else { log("session row missing") }
+        // Favorites persist across runs, so the toggle may already read "Remove".
+        let unsave = app.buttons["Remove from My Schedule"].firstMatch
+        if unsave.exists { log("already saved; un-saving first"); unsave.tap(); sleep(2) }
         let save = app.buttons["Add to My Schedule"].firstMatch
         let remind = app.buttons["Remind"].firstMatch
         let calendar = app.buttons["Calendar"].firstMatch
