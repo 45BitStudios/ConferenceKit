@@ -42,7 +42,11 @@ struct DiagnosticsView: View {
         authorization = "\(settings.authorizationStatus.rawValue)"
         let requests = await center.pendingNotificationRequests()
         pending = requests.map { request in
+            #if os(tvOS)
+            var line = request.identifier // tvOS notifications carry no title
+            #else
             var line = "\(request.identifier) | \(request.content.title)"
+            #endif
             if let trigger = request.trigger as? UNCalendarNotificationTrigger, let date = trigger.nextTriggerDate() {
                 line += " | \(date.formatted(date: .abbreviated, time: .shortened))"
             } else if let trigger = request.trigger as? UNTimeIntervalNotificationTrigger {

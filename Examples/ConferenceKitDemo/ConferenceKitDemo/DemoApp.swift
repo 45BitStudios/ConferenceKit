@@ -25,8 +25,11 @@ struct ConferenceKitDemoApp: App {
         WindowGroup {
             DemoLoader(fallback: store)
         }
+        #if os(iOS) || os(macOS) || os(visionOS)
+        // Detail windows; ConferenceKitUI doesn't ship them on tvOS.
         ConferenceSessionScene(store: store)
         ConferenceSpeakerScene(store: store)
+        #endif
     }
 }
 
