@@ -92,6 +92,8 @@ struct DemoRoot: View {
     static func describe(_ proxy: GeometryProxy) -> String {
         let size = proxy.size
         var text = "\(Int(size.width))x\(Int(size.height))"
+        #if os(iOS)
+        // Division reserved regions are a Duo (iOS) concept; visionOS windows report size only.
         if #available(iOS 27.1, *) {
             let regions = proxy.reservedRegions(kind: .division)
             if let region = regions.first(where: \.isActive) ?? regions.first {
@@ -102,6 +104,7 @@ struct DemoRoot: View {
                 text += " div none"
             }
         }
+        #endif
         return text
     }
 }

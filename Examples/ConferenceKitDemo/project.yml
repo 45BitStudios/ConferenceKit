@@ -1,4 +1,4 @@
-# Minimal iOS host for ConferenceKit. Generate with `xcodegen generate` in this folder.
+# Minimal iOS + visionOS host for ConferenceKit. Generate with `xcodegen generate` in this folder.
 # The project file is not committed; project.yml is the source of truth.
 # AskKitUI is left out on purpose: its VoiceGlowKit shaders need the Metal Toolchain component.
 name: ConferenceKitDemo
@@ -6,6 +6,7 @@ options:
   bundleIdPrefix: studio45.conferencekit
   deploymentTarget:
     iOS: "27.0"
+    visionOS: "27.0"
   createIntermediateGroups: true
 settings:
   base:
@@ -24,7 +25,7 @@ packages:
 targets:
   ConferenceKitDemo:
     type: application
-    platform: iOS
+    supportedDestinations: [iOS, visionOS]
     sources:
       - ConferenceKitDemo
     dependencies:
@@ -60,10 +61,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: studio45.conferencekit.demo
         GENERATE_INFOPLIST_FILE: "NO"
-        TARGETED_DEVICE_FAMILY: "1,2"
+        TARGETED_DEVICE_FAMILY: "1,2,7"
   ConferenceKitDemoUITests:
     type: bundle.ui-testing
-    platform: iOS
+    supportedDestinations: [iOS, visionOS]
     sources:
       - ConferenceKitDemoUITests
     dependencies:

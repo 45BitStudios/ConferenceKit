@@ -12,4 +12,8 @@ DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
 `SimPassUITests` drives the hinge (cover, flat, book, laptop), the cover companion
 toggle, reminders through UserNotifications, and Ask through `Integration/ConferenceKitAsk`.
 Screenshots go to `/tmp/ck273/shots` (override with `CK_SHOTS` in the test environment).
+
+The app target also builds for visionOS. `VisionSmokeUITests` walks the schedule, a session, notes,
+Settings, and Ask there; XCUIScreen captures are blank on the visionOS simulator, so the test logs
+`SNAP <name>` lines and the host takes `simctl io screenshot` shots during the pause.
 AskKitUI is left out because it needs the Metal Toolchain.

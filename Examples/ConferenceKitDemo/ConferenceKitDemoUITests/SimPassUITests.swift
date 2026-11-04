@@ -1,3 +1,4 @@
+#if os(iOS)
 import XCTest
 
 /// Simulator pass for the Duo: laptop mode, the cover companion toggle,
@@ -274,3 +275,4 @@ final class SimPassUITests: XCTestCase {
         shot("31_ask_answers_bottom")
     }
 }
+#endif
