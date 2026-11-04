@@ -34,7 +34,9 @@ extension View {
 
 @available(iOS 27.3, *)
 enum ConferenceLiveSession {
-    @MainActor
+    // Off the main actor: Activity isn't Sendable in the 27.3 SDK, and update/end are
+    // @concurrent, so a main-actor-isolated Activity can't be handed to them.
+    @concurrent
     static func sync(sessionID: String, title: String, room: String) async {
         let state = ConferenceSessionAttributes.ContentState(title: title, room: room)
         let existing = Activity<ConferenceSessionAttributes>.activities.first { $0.attributes.sessionID == sessionID }
