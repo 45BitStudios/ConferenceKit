@@ -53,7 +53,14 @@ struct RegularShell: View {
         } detail: {
             detail
         }
+        #if os(macOS)
+        .searchable(text: $store.searchText, placement: .toolbar, prompt: "Sessions, speakers, notes")
+        .modifier(SearchFocusRequest(request: router.searchRequest))
+        .toolbar { macToolbar }
+        .focusedSceneValue(\.conferenceContext, ConferenceCommandContext(store: store, router: router))
+        #else
         .searchable(text: $store.searchText, prompt: "Sessions, speakers, notes")
+        #endif
     }
 
     @ViewBuilder
@@ -70,6 +77,40 @@ struct RegularShell: View {
         case .info:
             InfoMenu(router: router, push: false)
         }
+    }
+
+    private var detail: some View {
+        SplitDetail(store: store, router: router)
+    }
+
+    #if os(macOS)
+    @ToolbarContentBuilder
+    private var macToolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .navigation) {
+            Button {
+                if let live = store.liveSessions.first { router.openSession(live.id, push: false) }
+            } label: {
+                Label("Now", systemImage: "dot.radiowaves.left.and.right")
+            }
+            .help("Jump to the session happening now")
+            .disabled(store.liveSessions.isEmpty)
+            Button {
+                if let id = router.nextSessionID(in: store) { router.openSession(id, push: false) }
+            } label: {
+                Label("Next Session", systemImage: "forward.end")
+            }
+            .help("Next session (⌘])")
+        }
+    }
+    #endif
+}
+
+struct SplitDetail: View {
+    @Bindable var store: ConferenceStore
+    var router: ConferenceRouter
+
+    var body: some View {
+        detail
     }
 
     @ViewBuilder
@@ -95,42 +136,40 @@ struct RegularShell: View {
     }
 }
 
+#if os(watchOS)
 struct WatchShell: View {
     @Bindable var store: ConferenceStore
     @Bindable var router: ConferenceRouter
 
     var body: some View {
         NavigationStack(path: $router.path) {
-            List {
-                if let live = store.liveSessions.first {
-                    Section("Now") {
-                        Button {
-                            router.openSession(live.id, push: true)
-                        } label: {
-                            SessionRow(session: live, store: store, emphasized: true)
-                        }
+            TabView {
+                WatchNowNext(store: store)
+                List(store.sessions) { session in
+                    NavigationLink(value: ConferenceRoute.session(session.id)) {
+                        SessionRow(session: session, store: store, emphasized: session.isHappening())
                     }
                 }
-                Section("Browse") {
-                    Button("Schedule") { router.section = .schedule }
-                    Button("Speakers") { router.section = .speakers }
-                    Button("My Schedule") { router.section = .favorites }
-                }
-                if router.section == .speakers {
-                    ForEach(store.speakers) { speaker in
-                        NavigationLink(value: ConferenceRoute.speaker(speaker.id)) {
-                            Text(speaker.name)
-                        }
+                .navigationTitle("Schedule")
+                List {
+                    if store.favoriteSessions.isEmpty {
+                        Text("Star a session and it lands here.").foregroundStyle(.secondary)
                     }
-                } else {
-                    ForEach(router.section == .favorites ? store.favoriteSessions : store.sessions) { session in
+                    ForEach(store.favoriteSessions) { session in
                         NavigationLink(value: ConferenceRoute.session(session.id)) {
                             SessionRow(session: session, store: store)
                         }
                     }
                 }
+                .navigationTitle("My Schedule")
+                List(store.speakers) { speaker in
+                    NavigationLink(value: ConferenceRoute.speaker(speaker.id)) {
+                        Text(speaker.name)
+                    }
+                }
+                .navigationTitle("Speakers")
             }
-            .navigationTitle(store.conferenceName)
+            .tabViewStyle(.verticalPage)
             .navigationDestination(for: ConferenceRoute.self) { route in
                 RoutedDetail(store: store, router: router, route: route, push: true, inlineNotes: true)
             }
@@ -138,6 +177,9 @@ struct WatchShell: View {
     }
 }
 
+#endif
+
+#if os(tvOS)
 struct TVShell: View {
     @Bindable var store: ConferenceStore
     @Bindable var router: ConferenceRouter
@@ -145,13 +187,13 @@ struct TVShell: View {
     var body: some View {
         NavigationStack(path: $router.path) {
             TabView(selection: $router.section) {
-                ScheduleList(store: store, router: router, push: true)
+                TVSessionGrid(store: store, router: router)
                     .tabItem { Label("Schedule", systemImage: "calendar") }
                     .tag(ConferenceSection.schedule)
-                SpeakerList(store: store, router: router, push: true)
+                TVSpeakerGrid(store: store, router: router)
                     .tabItem { Label("Speakers", systemImage: "person.2") }
                     .tag(ConferenceSection.speakers)
-                ScheduleList(store: store, router: router, push: true, favoritesOnly: true)
+                TVSessionGrid(store: store, router: router, favoritesOnly: true)
                     .tabItem { Label("My Schedule", systemImage: "star") }
                     .tag(ConferenceSection.favorites)
                 InfoMenu(router: router, push: true)
@@ -164,6 +206,8 @@ struct TVShell: View {
         }
     }
 }
+
+#endif
 
 struct RoutedDetail: View {
     @Bindable var store: ConferenceStore

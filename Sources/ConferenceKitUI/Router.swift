@@ -76,6 +76,8 @@ final class ConferenceRouter {
     var statusMessage: String?
     var coverCompanionEnabled = false
     var coverCompanionAvailable = false
+    /// Bumped by the macOS Find command to focus the toolbar search field.
+    var searchRequest = 0
 
     func setFollowLive(_ on: Bool) {
         followLive = on

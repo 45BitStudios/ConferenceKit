@@ -1,6 +1,9 @@
 import ConferenceKit
 import ConferenceKitIntents
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 public struct ConferenceAppView: View {
     @State private var store: ConferenceStore
@@ -80,7 +83,7 @@ public struct ConferenceAppView: View {
     }
 
     private var pose: DuoPose {
-        #if os(watchOS) || os(tvOS)
+        #if os(watchOS) || os(tvOS) || os(visionOS)
         return .compact
         #else
         return DuoLayout.pose(
@@ -107,12 +110,22 @@ public struct ConferenceAppView: View {
             WatchShell(store: store, router: router)
             #elseif os(tvOS)
             TVShell(store: store, router: router)
+            #elseif os(visionOS)
+            VisionShell(store: store, router: router)
             #else
             switch pose {
             case .compact:
                 CompactShell(store: store, router: router)
             case .regular:
+                #if os(iOS)
+                if #available(iOS 18, *), UIDevice.current.userInterfaceIdiom == .pad {
+                    PadTabShell(store: store, router: router)
+                } else {
+                    RegularShell(store: store, router: router)
+                }
+                #else
                 RegularShell(store: store, router: router)
+                #endif
             case .book:
                 BookShell(store: store, router: router, division: division, container: containerSize)
             case .laptop:

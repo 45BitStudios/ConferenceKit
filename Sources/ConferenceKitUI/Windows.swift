@@ -7,6 +7,7 @@ import UIKit
 public enum ConferenceSceneID {
     public static let session = "conferencekit.session"
     public static let speaker = "conferencekit.speaker"
+    public static let notes = "conferencekit.notes"
 }
 
 enum ConferenceActivity {
@@ -32,6 +33,8 @@ enum ConferenceActivity {
 enum ConferenceWindowRegistration {
     static var sessions = false
     static var speakers = false
+    static var notes = false
+    static var settings = false
 }
 
 struct NewSessionWindowButton: View {
@@ -143,6 +146,70 @@ struct ConferenceSpeakerWindow: View {
             }
         }
         .conferenceTheme(store.theme)
+    }
+}
+#endif
+
+#if os(macOS) || os(visionOS)
+/// A separate notes window for one session (visionOS ornament, macOS).
+public struct ConferenceNotesScene: Scene {
+    let store: ConferenceStore
+
+    public init(store: ConferenceStore) {
+        self.store = store
+        ConferenceWindowRegistration.notes = true
+    }
+
+    public var body: some Scene {
+        WindowGroup(id: ConferenceSceneID.notes, for: String.self) { $sessionID in
+            NavigationStack {
+                if let sessionID, let session = store.session(id: sessionID) {
+                    NotesEditor(store: store, session: session)
+                        .navigationTitle(session.title)
+                } else {
+                    EmptyPane(title: "Notes", systemImage: "note.text", message: "This window doesn’t have a session.")
+                }
+            }
+            .conferenceTheme(store.theme)
+        }
+    }
+}
+#endif
+
+#if os(macOS)
+/// The app Settings scene (⌘,) on macOS, replacing the in-app Settings row.
+public struct ConferenceSettingsScene: Scene {
+    let store: ConferenceStore
+
+    public init(store: ConferenceStore) {
+        self.store = store
+        ConferenceWindowRegistration.settings = true
+    }
+
+    public var body: some Scene {
+        Settings {
+            ConferenceSettingsWindow(store: store)
+        }
+    }
+}
+
+struct ConferenceSettingsWindow: View {
+    var store: ConferenceStore
+    @State private var router = ConferenceRouter()
+
+    var body: some View {
+        SettingsScreen(store: store, router: router)
+            .formStyle(.grouped)
+            .frame(width: 460)
+            .fixedSize(horizontal: false, vertical: true)
+            .task {
+                router.followLive = FollowLivePreference.load(from: ConferenceKitConfiguration.shared.resolvedDefaults())
+            }
+            .alert("Conference", isPresented: Binding(get: { router.statusMessage != nil }, set: { if !$0 { router.statusMessage = nil } })) {
+                Button("OK", role: .cancel) { router.statusMessage = nil }
+            } message: {
+                Text(router.statusMessage ?? "")
+            }
     }
 }
 #endif

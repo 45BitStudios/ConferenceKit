@@ -51,6 +51,10 @@ struct ScheduleList: View {
                         SessionRow(session: session, store: store, emphasized: session.isHappening())
                     }
                     .buttonStyle(.plain)
+                    #if os(visionOS)
+                    .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 12))
+                    .hoverEffect()
+                    #endif
                     .scheduleScrollFade()
                     .accessibilityHint("Opens session")
                 }
@@ -146,6 +150,11 @@ struct SessionDetail: View {
         }
         .navigationTitle(session.kind.label)
         .toolbar { toolbar }
+        #if os(visionOS)
+        .ornament(attachmentAnchor: .scene(.bottom)) {
+            SessionActionsOrnament(store: store, router: router, session: session)
+        }
+        #endif
         #if SIRI_AI_PREVIEW && os(iOS)
         .siriSessionContext(
             sessionID: session.id,
@@ -203,6 +212,7 @@ struct SessionDetail: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        #if !os(visionOS)
         ToolbarItem(placement: .primaryAction) {
             Button {
                 Task { await ConferenceActions.toggleFavorite(store, sessionID: session.id) }
@@ -223,19 +233,12 @@ struct SessionDetail: View {
         }
         ToolbarItem(placement: .primaryAction) {
             Button {
-                Task {
-                    store.setRemindersEnabled(true)
-                    if !store.favorites.contains(session.id) {
-                        await ConferenceActions.toggleFavorite(store, sessionID: session.id)
-                    } else {
-                        await ConferenceActions.syncReminders(store)
-                    }
-                    router.statusMessage = "Reminder follows this favorite."
-                }
+                Task { await SessionActionRunner.remind(store, router: router, session: session) }
             } label: {
                 Label("Remind", systemImage: "alarm")
             }
         }
+        #endif
         #if os(iOS) || os(macOS) || os(visionOS)
         if let url = store.shareURL(for: .session(session.id)) {
             ToolbarItem(placement: .primaryAction) {
