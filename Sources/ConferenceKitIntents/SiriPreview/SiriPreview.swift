@@ -7,15 +7,18 @@ import SwiftUI
 
 // Siri AI Developer Preview (iOS 27.3 / macOS 27.3 / visionOS 27.3).
 // This file is excluded from the Xcode 27.2 build unless SIRI_AI_PREVIEW is set.
-// Confirmed from Apple's preview docs:
-//   @AppIntent(.tool) adds ToolIntent
-//   @AppIntent(.tool, schema:)
-//   @AppEntity(.generable) on a TransientAppEntity
-//   @Property(..., visibility: .internal)
-//   ComputedProperty / DeferredProperty overloads that take indexingKey
-// Inferred: indexingKey key paths (\.title, \.contentDescription) match CSSearchableItemAttributeSet.
-// Inferred: ShowsSnippetView / snippetIntent: follow the iOS 26 snippet result, which the
-// preview overview describes only as "card snippets" and "custom views".
+// Checked against the Xcode 27.3 beta (27C5020n) AppIntents swiftinterface:
+//   @AppIntent(.tool) adds ToolIntent; @AppEntity(.generable) adds GenerableEntity
+//   (a TransientAppEntity; iOS/macOS/visionOS 27.3, not watchOS/tvOS).
+//   @Property / @ComputedProperty / @DeferredProperty take title:description:
+//   authenticationPolicy:visibility: and, on iOS/macOS/visionOS, indexingKey:.
+//   The property macros emit a stored `_name` peer, so they must sit in the type
+//   body (not an extension), and the enclosing type must itself be 27.3-only:
+//   the macro rejects a per-property @available. ConferenceKit's entities ship to
+//   iOS 17, so the preview exposes 27.3-only mirror entities below instead of
+//   annotating SessionEntity / SpeakerEntity / SessionNoteEntity.
+//   DisplayRepresentation is ExpressibleByStringLiteral only, not interpolation.
+//   SnippetIntent + ShowsSnippetView `.result(view:)` is unchanged from iOS 26.
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 @AppIntent(.tool)
@@ -43,9 +46,6 @@ public struct WhatsNextTool: AppIntent {
             : manifest.sessions
         let session = ConferenceSearch.liveSessions(in: pool).first ?? ConferenceSearch.nextUp(in: pool).first
         let spoken = session.map { "\($0.title)" } ?? "Nothing else is scheduled."
-        if let session {
-            return .result(dialog: IntentDialog(stringLiteral: spoken))
-        }
         return .result(dialog: IntentDialog(stringLiteral: spoken))
     }
 }
@@ -176,42 +176,134 @@ public struct SessionQueryEntity: TransientAppEntity {
     @Property(title: "Words", description: "Title, speaker, room, or track to look for.")
     public var words: String
 
-    public var displayRepresentation: DisplayRepresentation { "\(words)" }
+    public var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(words)") }
 
     public init() { words = "" }
 }
 
+/// Preview-only mirror of `SessionEntity`, so the 27.3 property macros can live in
+/// the type body. Hidden from Spotlight results (SessionEntity already shows there);
+/// it stays in the semantic index for Siri.
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
-extension SessionEntity {
+public struct SiriSessionEntity: IndexedEntity {
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session")
+    public static let defaultQuery = SiriSessionEntityQuery()
+
+    public var id: String
+    public var title: String
+    public var speakerNames: String
+    var synopsisText: String
+
     @ComputedProperty(
         title: "Synopsis",
         description: "What the session is about.",
         indexingKey: \.contentDescription
     )
-    public var siriSynopsis: String { synopsis }
+    public var synopsis: String { synopsisText }
 
     @DeferredProperty(
         title: "Saved",
         description: "Whether this session is on My Schedule."
     )
-    public var siriSaved: String {
+    public var saved: String {
         get async throws {
             let ids = await IntentCatalog.favoriteSessionIDs()
             return ids.contains(id) ? "favorite" : "not favorite"
         }
     }
+
+    public var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(title)", subtitle: "\(speakerNames)")
+    }
+
+    public var hideInSpotlight: Bool { true }
+
+    public init(_ session: SessionEntity) {
+        id = session.id
+        title = session.title
+        speakerNames = session.speakerNames
+        synopsisText = session.synopsis
+    }
 }
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
-extension SpeakerEntity {
+public struct SiriSessionEntityQuery: EntityQuery {
+    public init() {}
+
+    public func entities(for identifiers: [SiriSessionEntity.ID]) async throws -> [SiriSessionEntity] {
+        try await SessionEntityQuery().entities(for: identifiers).map(SiriSessionEntity.init)
+    }
+
+    public func suggestedEntities() async throws -> [SiriSessionEntity] {
+        try await SessionEntityQuery().suggestedEntities().map(SiriSessionEntity.init)
+    }
+}
+
+/// Preview-only mirror of `SpeakerEntity`.
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+public struct SiriSpeakerEntity: IndexedEntity {
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Speaker")
+    public static let defaultQuery = SiriSpeakerEntityQuery()
+
+    public var id: String
+    public var name: String
+    var bioText: String
+
     @ComputedProperty(title: "Bio", description: "The speaker biography.", indexingKey: \.contentDescription)
-    public var siriBio: String { bio }
+    public var bio: String { bioText }
+
+    public var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
+    public var hideInSpotlight: Bool { true }
+
+    public init(_ speaker: SpeakerEntity) {
+        id = speaker.id
+        name = speaker.name
+        bioText = speaker.bio
+    }
 }
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
-extension SessionNoteEntity {
+public struct SiriSpeakerEntityQuery: EntityQuery {
+    public init() {}
+
+    public func entities(for identifiers: [SiriSpeakerEntity.ID]) async throws -> [SiriSpeakerEntity] {
+        try await SpeakerEntityQuery().entities(for: identifiers).map(SiriSpeakerEntity.init)
+    }
+}
+
+/// Preview-only mirror of `SessionNoteEntity`.
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+public struct SiriNoteEntity: IndexedEntity {
+    public static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Session Note")
+    public static let defaultQuery = SiriNoteEntityQuery()
+
+    public var id: String
+    public var sessionTitle: String
+    var noteText: String
+
     @ComputedProperty(title: "Note", description: "The text the person wrote.", indexingKey: \.contentDescription)
-    public var siriText: String { text }
+    public var text: String { noteText }
+
+    public var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(noteText)", subtitle: "\(sessionTitle)")
+    }
+
+    public var hideInSpotlight: Bool { true }
+
+    public init(_ note: SessionNoteEntity) {
+        id = note.id
+        sessionTitle = note.sessionTitle
+        noteText = note.text
+    }
+}
+
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+public struct SiriNoteEntityQuery: EntityQuery {
+    public init() {}
+
+    public func entities(for identifiers: [SiriNoteEntity.ID]) async throws -> [SiriNoteEntity] {
+        try await SessionNoteEntityQuery().entities(for: identifiers).map(SiriNoteEntity.init)
+    }
 }
 
 @available(iOS 18.0, macOS 15.0, visionOS 2.0, *)
@@ -298,6 +390,11 @@ public struct FavoriteScheduleEntity: AppEntity, IndexedEntity {
         DisplayRepresentation(title: "My Schedule", subtitle: "\(summary)")
     }
 
+    public init(id: String, summary: String) {
+        self.id = id
+        self.summary = summary
+    }
+
     public var attributeSet: CSSearchableItemAttributeSet {
         let attributes = defaultAttributeSet
         attributes.title = "My Schedule"
@@ -321,7 +418,8 @@ public struct FavoriteScheduleEntityQuery: EntityQuery {
         return [entity]
     }
 
-    private static func make() async -> FavoriteScheduleEntity? {
+    /// Internal so ConferenceSiriPreviewIndex can index the same row.
+    static func make() async -> FavoriteScheduleEntity? {
         guard let manifest = await IntentCatalog.manifest() else { return nil }
         let ids = await IntentCatalog.favoriteSessionIDs()
         let titles = manifest.sessions.filter { ids.contains($0.id) }.map(\.title)
@@ -339,8 +437,12 @@ enum ConferenceSiriPreviewIndex {
             DayEntity(id: DayEntityQuery.identifier(for: day.start, clock: clock), title: clock.dayString(day.start))
         }
         try? await index.indexAppEntities(days)
-        try? await index.indexAppEntities(manifest.sessions.map { SessionEntity($0, manifest: manifest) })
-        try? await index.indexAppEntities(manifest.speakers.map(SpeakerEntity.init))
+        let sessions = manifest.sessions.map { SessionEntity($0, manifest: manifest) }
+        try? await index.indexAppEntities(sessions)
+        try? await index.indexAppEntities(sessions.map(SiriSessionEntity.init))
+        let speakers = manifest.speakers.map(SpeakerEntity.init)
+        try? await index.indexAppEntities(speakers)
+        try? await index.indexAppEntities(speakers.map(SiriSpeakerEntity.init))
         try? await index.indexAppEntities(manifest.tracks.map(TrackEntity.init))
         try? await index.indexAppEntities(manifest.rooms.map(RoomEntity.init))
         if let venue = manifest.conference.venue {
@@ -350,7 +452,9 @@ enum ConferenceSiriPreviewIndex {
         }
         try? await index.indexAppEntities(manifest.sponsors.map(SponsorEntity.init))
         let notes = await MainActor.run { notesStore(manifest: manifest).notes }
-        try? await index.indexAppEntities(notes.map { SessionNoteEntity($0, manifest: manifest) })
+        let noteEntities = notes.map { SessionNoteEntity($0, manifest: manifest) }
+        try? await index.indexAppEntities(noteEntities)
+        try? await index.indexAppEntities(noteEntities.map(SiriNoteEntity.init))
         if let favorites = await FavoriteScheduleEntityQuery.make() {
             try? await index.indexAppEntities([favorites])
         }

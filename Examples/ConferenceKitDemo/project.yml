@@ -1,0 +1,87 @@
+# One multiplatform host (iOS, macOS, visionOS, tvOS; watchOS can't share an app target) for ConferenceKit. Generate with `xcodegen generate` in this folder.
+# The project file is not committed; project.yml is the source of truth.
+# AskKitUI is left out on purpose: its VoiceGlowKit shaders need the Metal Toolchain component.
+name: ConferenceKitDemo
+options:
+  bundleIdPrefix: studio45.conferencekit
+  deploymentTarget:
+    iOS: "27.0"
+    visionOS: "27.0"
+    macOS: "27.0"
+    tvOS: "27.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGNING_ALLOWED: "NO"
+packages:
+  ConferenceKit:
+    path: ../..
+  ConferenceKitAsk:
+    path: ../../Integration/ConferenceKitAsk
+  AskKit:
+    url: https://github.com/45BitStudios/AskKit.git
+    branch: main
+targets:
+  ConferenceKitDemo:
+    type: application
+    supportedDestinations: [iOS, macOS, visionOS, tvOS]
+    sources:
+      - ConferenceKitDemo
+    dependencies:
+      - package: ConferenceKit
+        product: ConferenceKit
+      - package: ConferenceKit
+        product: ConferenceKitUI
+      - package: ConferenceKit
+        product: ConferenceKitIntents
+      - package: ConferenceKitAsk
+        product: ConferenceKitAskLink
+      - package: AskKit
+        product: AskKit
+    info:
+      path: ConferenceKitDemo/Info.plist
+      properties:
+        CFBundleDisplayName: ConferenceKit Demo
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+          - UIInterfaceOrientationPortraitUpsideDown
+        NSCalendarsWriteOnlyAccessUsageDescription: Adds sessions you choose to your calendar.
+        NSAlarmKitUsageDescription: Alarms before sessions you favorite.
+        NSCameraUsageDescription: Photographs a slide into the open session's notes.
+        NSUserActivityTypes:
+          - studio45.conferencekit.open-session
+          - studio45.conferencekit.open-speaker
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: studio45.conferencekit.demo
+        GENERATE_INFOPLIST_FILE: "NO"
+        TARGETED_DEVICE_FAMILY: "1,2,3,7"
+  ConferenceKitDemoUITests:
+    type: bundle.ui-testing
+    supportedDestinations: [iOS, visionOS]
+    sources:
+      - ConferenceKitDemoUITests
+    dependencies:
+      - target: ConferenceKitDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: studio45.conferencekit.demo.uitests
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_TARGET_NAME: ConferenceKitDemo
+schemes:
+  ConferenceKitDemo:
+    build:
+      targets:
+        ConferenceKitDemo: all
+        ConferenceKitDemoUITests: [test]
+    test:
+      targets:
+        - ConferenceKitDemoUITests
