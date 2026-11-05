@@ -181,7 +181,9 @@ extension SpeakerEntity: Transferable {
     }
 }
 
-/// Snippet actions. `SessionSnippetIntent.perform()` only reads; these buttons run the existing intents.
+/// Snippet actions. The session card only reads; these buttons run the existing intents.
+/// Used by the result snippet and by the entity card. The entity card is archived, then
+/// archived again after a button runs.
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 struct SessionSnippetActions: View {
     var session: SessionEntity
@@ -195,12 +197,11 @@ struct SessionSnippetActions: View {
                 Label("Remind", systemImage: "bell")
             }
             Button(intent: AddSessionToCalendarIntent(session: session)) {
-                Label("Add to Calendar", systemImage: "calendar.badge.plus")
+                Label("Calendar", systemImage: "calendar.badge.plus")
             }
         }
         .buttonStyle(.bordered)
-        .labelStyle(.iconOnly)
-        .padding([.horizontal, .bottom])
+        .font(.caption)
     }
 }
 
