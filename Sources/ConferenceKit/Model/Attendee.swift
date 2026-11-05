@@ -73,8 +73,9 @@ public struct Attendee: Codable, Hashable, Identifiable, Sendable {
         return copy
     }
 
-    /// Directory search. Uses only fields that would be shown publicly.
+    /// Directory search. Hidden attendees never match. Contact fields match only when marked public.
     public func matchesDirectoryQuery(_ query: String) -> Bool {
+        guard privacy.discoverable else { return false }
         let visible = hidingPrivateContactFields()
         let fields: [String?] = [
             visible.displayName,
@@ -204,6 +205,7 @@ extension ConferenceSearch {
     ) -> [Attendee] {
         let query = filter.query.trimmingCharacters(in: .whitespacesAndNewlines)
         return manifest.directoryAttendees(profile: profile).filter { attendee in
+            guard attendee.privacy.discoverable else { return false }
             if let ticketKind = filter.ticketKind, attendee.ticket?.kind != ticketKind { return false }
             if query.isEmpty { return true }
             return attendee.matchesDirectoryQuery(query)

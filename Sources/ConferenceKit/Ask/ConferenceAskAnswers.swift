@@ -220,7 +220,8 @@ public enum ConferenceAskAnswers {
             guard !listed.isEmpty else { return "No attendees are listed." }
             return "Listed attendees: \(listed.map(\.displayName).joined(separator: ", "))."
         }
-        guard let person = listed.first(where: { $0.matchesDirectoryQuery(name) || name.localizedStandardContains($0.displayName) }) else {
+        let people = listed.filter(\.privacy.discoverable)
+        guard let person = people.first(where: { $0.matchesDirectoryQuery(name) || name.localizedStandardContains($0.displayName) }) else {
             return "I don’t see \(name) in the attendee directory."
         }
         var bits = [person.displayName]

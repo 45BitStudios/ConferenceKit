@@ -60,6 +60,16 @@ struct AttendeeDirectory: View {
                 Text(store.searchText.isEmpty ? "No one has joined the directory." : "No one matches.")
                     .foregroundStyle(.secondary)
             }
+            #if os(watchOS)
+            if ticketKinds.count > 1 {
+                Picker("Tickets", selection: ticketSelection) {
+                    Text("All tickets").tag("")
+                    ForEach(ticketKinds, id: \.self) { kind in
+                        Text(kind).tag(kind)
+                    }
+                }
+            }
+            #endif
             ForEach(people) { attendee in
                 Button {
                     router.openAttendee(attendee.id, push: push)
@@ -71,6 +81,7 @@ struct AttendeeDirectory: View {
             }
         }
         .navigationTitle("Attendees")
+        #if !os(watchOS)
         .toolbar {
             if ticketKinds.count > 1 {
                 ToolbarItem(placement: .primaryAction) {
@@ -85,8 +96,19 @@ struct AttendeeDirectory: View {
                 }
             }
         }
+        #endif
         .task { await store.inbox?.refresh() }
     }
+
+    #if os(watchOS)
+    /// watchOS has no `Menu`, so the ticket filter is a picker bound through a plain string.
+    private var ticketSelection: Binding<String> {
+        Binding(
+            get: { ticketKind ?? "" },
+            set: { ticketKind = $0.isEmpty ? nil : $0 }
+        )
+    }
+    #endif
 }
 
 struct AttendeeColumn: View {
@@ -551,17 +573,15 @@ struct AttendeeShareSection: View {
         } label: {
             Label("Save to Contacts", systemImage: "person.crop.circle.badge.plus")
         }
-        #elseif canImport(Contacts) && (os(macOS) || os(watchOS))
+        #elseif os(macOS) && canImport(Contacts)
         Button("Save to Contacts") {
             Task {
                 router.statusMessage = await AttendeeContactSaving.save(attendee)
             }
         }
-        #if os(macOS)
         Button("Open card in Contacts") {
             router.statusMessage = AttendeeContactSaving.openCard(card)
         }
-        #endif
         #else
         Text("Save the card from a device that has Contacts.")
             .font(.footnote)
@@ -614,7 +634,7 @@ struct AttendeeQRCode: View {
 enum AttendeeContactSaving {
     @MainActor
     static func save(_ attendee: Attendee) async -> String {
-        #if canImport(Contacts) && !os(tvOS)
+        #if canImport(Contacts) && !os(tvOS) && !os(watchOS)
         do {
             let granted = try await CNContactStore().requestAccess(for: .contacts)
             guard granted else { return "Contacts access is off." }
@@ -829,9 +849,7 @@ struct ConversationScreen: View {
     }
 
     private var other: Attendee? {
-        otherID.flatMap { id in
-            store.directoryAttendee(id: id) ?? store.attendees.first { person in person.id == id }
-        }
+        otherID.flatMap { store.directoryAttendee(id: $0) }
     }
 
     var body: some View {
@@ -842,6 +860,19 @@ struct ConversationScreen: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
                 .padding(.vertical, 8)
+            #if os(watchOS)
+            if let otherID, otherID != localID {
+                VStack(alignment: .leading) {
+                    Button(store.inbox?.isBlocked(otherID) == true ? "Unblock" : "Block") {
+                        let blocked = store.inbox?.isBlocked(otherID) == true
+                        Task { await store.inbox?.setBlocked(otherID, blocked: !blocked) }
+                    }
+                    Button("Report") { reporting = true }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+            }
+            #endif
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 8) {
                     ForEach(store.inbox?.snapshot.messages(in: conversationID) ?? []) { message in
@@ -856,6 +887,7 @@ struct ConversationScreen: View {
             composer
         }
         .navigationTitle(other?.displayName ?? "Message")
+        #if !os(watchOS)
         .toolbar {
             if let otherID, otherID != localID {
                 ToolbarItem(placement: .primaryAction) {
@@ -871,6 +903,7 @@ struct ConversationScreen: View {
                 }
             }
         }
+        #endif
         .confirmationDialog("Report this person", isPresented: $reporting, titleVisibility: .visible) {
             if let otherID {
                 Button("Spam") { Task { await store.inbox?.report(otherID, reason: "Spam") } }
