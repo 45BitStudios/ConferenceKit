@@ -136,6 +136,7 @@ struct NotesEditor: View {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, let session else { return }
         _ = notes?.add(body: text, session: session, kind: kind, starred: starred, takeaway: takeaway)
+        SiriDonations.note(store, text: text, session: session)
         draft = ""
     }
 

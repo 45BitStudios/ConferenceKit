@@ -116,6 +116,7 @@ enum ConferenceActions {
     static func toggleFavorite(_ store: ConferenceStore, sessionID: String) async {
         store.favorites.toggle(sessionID)
         store.publishFavorites()
+        SiriDonations.favorite(store, sessionID: sessionID)
         await syncReminders(store)
     }
 

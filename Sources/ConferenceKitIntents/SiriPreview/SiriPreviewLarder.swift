@@ -24,13 +24,28 @@ public struct SessionNoteDraft: TransientAppEntity {
     public init() { text = "" }
 }
 
-struct SessionNoteDraftFailure: LocalizedError {
-    var problem: SessionNoteDraftRules.Problem
+/// Errors Siri reads back. Each says what to try next, because the model retries with it.
+struct SiriActionError: Error, CustomLocalizedStringResourceConvertible {
+    enum Reason { case emptyNote, noteTooLong(Int), noSession }
+    var reason: Reason
 
-    var errorDescription: String? {
+    init(problem: SessionNoteDraftRules.Problem) {
         switch problem {
-        case .empty: "The note is empty."
-        case .tooLong(let count): "The note is \(count) characters. Keep it under \(SessionNoteDraftRules.maximumLength)."
+        case .empty: reason = .emptyNote
+        case .tooLong(let count): reason = .noteTooLong(count)
+        }
+    }
+
+    init(_ reason: Reason) { self.reason = reason }
+
+    var localizedStringResource: LocalizedStringResource {
+        switch reason {
+        case .emptyNote:
+            "The note is empty. Ask what they want to write, then try again with that text."
+        case .noteTooLong(let count):
+            "The note is \(count) characters. Shorten it to under \(SessionNoteDraftRules.maximumLength) and try again."
+        case .noSession:
+            "No session is on screen or live. Use the Find Session tool to pick the session, then try again with it."
         }
     }
 }
@@ -40,7 +55,8 @@ struct SessionNoteDraftFailure: LocalizedError {
 public struct CreateSessionNoteIntent: AppIntent {
     public static let title: LocalizedStringResource = "Create Session Note"
     public static let description = IntentDescription(
-        LocalizedStringResource("Writes a note from the request and saves it on a session after checking it.")
+        LocalizedStringResource("Writes a note from the request and saves it on a session after checking it."),
+        searchKeywords: [LocalizedStringResource("note"), LocalizedStringResource("write down")]
     )
 
     @Parameter(title: "Draft", description: LocalizedStringResource("The note to save."))
@@ -56,9 +72,13 @@ public struct CreateSessionNoteIntent: AppIntent {
         let text: String
         switch SessionNoteDraftRules.validated(draft.text) {
         case .success(let value): text = value
-        case .failure(let problem): throw SessionNoteDraftFailure(problem: problem)
+        case .failure(let problem): throw SiriActionError(problem: problem)
         }
-        guard let pair = await resolveSession(explicit: session) else { throw NoteIntentFailure() }
+        guard let pair = await resolveSession(explicit: session) else { throw SiriActionError(.noSession) }
+        try await requestConfirmation(
+            actionName: .add,
+            dialog: IntentDialog(stringLiteral: "Save this note on \(pair.session.title)? “\(text)”")
+        )
         let note = notesStore(manifest: pair.manifest).add(body: text, session: pair.session, kind: .text)
         return .result(
             value: SessionNoteEntity(note, manifest: pair.manifest),
@@ -124,10 +144,14 @@ struct LogLearnedIntent {  // internal: the schema macro synthesizes a non-publi
         let text: String
         switch SessionNoteDraftRules.validated(String(message.characters)) {
         case .success(let value): text = value
-        case .failure(let problem): throw SessionNoteDraftFailure(problem: problem)
+        case .failure(let problem): throw SiriActionError(problem: problem)
         }
-        guard let pair = await resolveSession(explicit: nil) else { throw NoteIntentFailure() }
+        guard let pair = await resolveSession(explicit: nil) else { throw SiriActionError(.noSession) }
         let now = entryDate ?? .now
+        try await requestConfirmation(
+            actionName: .add,
+            dialog: IntentDialog(stringLiteral: "Log this takeaway on \(pair.session.title)?")
+        )
         let note = notesStore(manifest: pair.manifest).add(body: text, session: pair.session, takeaway: true, now: now)
         return .result(value: LearnedEntryEntity(SessionNoteEntity(note, manifest: pair.manifest), date: now))
     }
