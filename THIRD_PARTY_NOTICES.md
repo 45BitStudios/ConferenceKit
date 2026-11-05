@@ -6,6 +6,8 @@ Some Siri preview code follows patterns from Larder (https://github.com/artemnov
 the skills bundle layout and SKILL.md format, the generable note draft with an intent that validates it,
 `Button(intent:)` snippet actions, `ProxyRepresentation` Transferable entities, the journal
 `createEntry` schema intent, and the reset-before-and-after pattern in the Siri evaluation.
+Entity cards (`SnippetRepresentableEntity`, `CardSnippet`) follow Apple's App Intents documentation.
+Larder uses result snippets (`SnippetIntent`) and does not include that API.
 
 Files: `Sources/ConferenceKitIntents/SiriPreview/SiriPreviewLarder.swift`,
 `Examples/ConferenceKitDemo/ConferenceKitDemo/Skills.skillsbundle`,

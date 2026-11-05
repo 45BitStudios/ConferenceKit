@@ -19,6 +19,7 @@ import SwiftUI
 //   annotating SessionEntity / SpeakerEntity / SessionNoteEntity.
 //   DisplayRepresentation is ExpressibleByStringLiteral only, not interpolation.
 //   SnippetIntent + ShowsSnippetView `.result(view:)` is unchanged from iOS 26.
+//   Entity cards are separate: SnippetRepresentableEntity + CardSnippet in EntitySnippets.swift.
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 @AppIntent(.tool)
@@ -493,10 +494,7 @@ public struct SessionSnippetIntent: SnippetIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ShowsSnippetView {
-        .result(view: VStack(spacing: 0) {
-            SessionSnippetCard(title: session.title, detail: session.speakerNames)
-            SessionSnippetActions(session: session)
-        })
+        .result(view: SessionEntityCard(session: session, density: .standard))
     }
 }
 
@@ -515,23 +513,7 @@ public struct SpeakerSnippetIntent: SnippetIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ShowsSnippetView {
-        .result(view: SessionSnippetCard(title: speaker.name, detail: speaker.affiliation))
-    }
-}
-
-struct SessionSnippetCard: View {
-    var title: String
-    var detail: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.headline)
-            if !detail.isEmpty {
-                Text(detail).font(.subheadline).foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
+        .result(view: SpeakerEntityCard(speaker: speaker, density: .standard))
     }
 }
 #endif

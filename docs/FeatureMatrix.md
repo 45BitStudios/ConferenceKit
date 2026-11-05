@@ -87,7 +87,8 @@ Off unless `SIRI_AI_PREVIEW` is set. The default Xcode 27.2 build does not compi
 | `@AppIntent(.tool)` for what’s next, find session, favorite, add note, show notes, export notes | In `SiriPreview.swift`, compiled only with the flag. |
 | Indexing keys and traits on the main entities, including favorites | Same file. `@ComputedProperty` / `@DeferredProperty` and `IndexedEntity` for the types that were not already indexed. |
 | `@AppEntity(.generable)` session search | `SessionQueryEntity`. |
-| Snippet cards | `SessionSnippetIntent` and `SpeakerSnippetIntent`. The card-view result type is inferred from the preview overview plus the earlier snippet intent API. |
+| Result snippets | `SessionSnippetIntent` and `SpeakerSnippetIntent` (`SnippetIntent` / `ShowsSnippetView`, the iOS 26 result API). They render the same session and speaker cards as the entity snippets. |
+| Entity snippets | `SnippetRepresentableEntity` + `CardSnippet` for `CardSnippetFamily.standard`, in `EntitySnippets.swift`. Session, speaker, session note, conference, room, venue, My Schedule, and the preview mirror entities. Documented in the 27.3 App Intents SDK. Larder does not include this API. Session cards run the existing favorite, reminder, and calendar intents. Note cards run `ShowNotesForSessionIDIntent` and `ToggleSessionNoteStarIntent`, which are not tools and are not discoverable. watchOS and tvOS stay out of the preview. |
 | Foreground context and Live Activity | Session screen sets a user activity and a Live Activity while the flag is on, so a note can attach to the session on screen. |
 | App skills | `plan-afternoon` and `recall-notes` markdown for the host’s `Skills.skillsbundle`. Skills guide Siri. They do not force tool order. |
 | Siri Evaluations | Sample file only. Not part of `swift test`. |
