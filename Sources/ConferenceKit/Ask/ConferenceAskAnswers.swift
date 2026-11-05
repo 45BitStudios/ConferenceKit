@@ -5,6 +5,7 @@ public enum ConferenceAskKind: String, Sendable, Equatable {
     case nextInRoom
     case whatsNext
     case summarizeNotes
+    case dayAgenda
     case favorites
     case unknown
 
@@ -56,6 +57,9 @@ public enum ConferenceAskAnswers {
         if lower.contains("favorite") || lower.contains("save") || lower.contains("my schedule") {
             return (.favorites, [:])
         }
+        if let day = dayNumberPhrase(in: lower) {
+            return (.dayAgenda, ["day": day])
+        }
         if let room = roomPhrase(in: lower), lower.contains("next") || lower.contains("on now") || lower.contains("happening") {
             return (.nextInRoom, ["room": room])
         }
@@ -85,6 +89,8 @@ public enum ConferenceAskAnswers {
             spoken = whatsNext(catalog: catalog)
         case .summarizeNotes:
             spoken = summarizeNotes(day: merged["day"] ?? "", catalog: catalog)
+        case .dayAgenda:
+            spoken = dayAgenda(day: merged["day"] ?? "", catalog: catalog)
         case .favorites:
             spoken = favorites(catalog: catalog)
         case .unknown:
@@ -139,22 +145,65 @@ public enum ConferenceAskAnswers {
     }
 
     public static func summarizeNotes(day query: String, catalog: ConferenceAskCatalog) -> String {
-        let day = resolveDay(query, catalog: catalog)
-        let sessions = day.map { catalog.manifest.sessions(on: $0) } ?? catalog.manifest.sessions
-        let ids = Set(sessions.map(\.id))
-        let notes = catalog.notes.filter { ids.contains($0.sessionID) }.sorted { $0.createdAt < $1.createdAt }
-        guard !notes.isEmpty else {
-            return day == nil ? "You don’t have notes yet." : "You don’t have notes for that day."
+        let days = scheduleDays(catalog.manifest)
+        let day = resolveDayIndex(query, days: days, catalog: catalog)
+        let sessions = day.map { days[$0] } ?? catalog.manifest.sessions
+        let order = Dictionary(uniqueKeysWithValues: sessions.map { ($0.id, $0.startTime) })
+        let notes = catalog.notes.filter { order[$0.sessionID] != nil }.sorted {
+            let a = order[$0.sessionID]!, b = order[$1.sessionID]!
+            return a == b ? $0.createdAt < $1.createdAt : a < b
         }
-        let clock = catalog.manifest.clock
+        guard !notes.isEmpty else {
+            if catalog.notes.isEmpty { return "You don’t have notes yet." }
+            return day.map { "You don’t have notes for day \($0 + 1)." } ?? "You don’t have notes yet."
+        }
         let lines = notes.prefix(8).map { note in
             let title = catalog.manifest.session(id: note.sessionID)?.title ?? "Session"
             let stamp = note.offsetFromStart.map { " \(SessionProgress.offsetLabel($0))" } ?? ""
             let mark = note.isTakeaway ? "Takeaway: " : ""
             return "\(title)\(stamp): \(mark)\(note.body)"
         }
-        let label = day.map { clock.dayString($0) } ?? "the conference"
+        let label = day.map { dayLabel($0, days: days, catalog: catalog) } ?? "the conference"
         return "Notes from \(label). " + lines.joined(separator: " ")
+    }
+
+    /// Every session on one conference day, in time order, with the day named.
+    public static func dayAgenda(day query: String, catalog: ConferenceAskCatalog) -> String {
+        let days = scheduleDays(catalog.manifest)
+        guard !days.isEmpty else { return "Nothing is scheduled." }
+        guard let index = resolveDayIndex(query, days: days, catalog: catalog) else {
+            return "The conference has \(days.count) day\(days.count == 1 ? "" : "s")."
+        }
+        let clock = catalog.manifest.clock
+        let lines = days[index].map { session in
+            let room = session.roomID.flatMap { catalog.manifest.room(id: $0)?.name }
+            return [clock.timeString(session.startTime), session.title, room].compactMap { $0 }.joined(separator: " ")
+        }
+        return "\(dayLabel(index, days: days, catalog: catalog)): " + lines.joined(separator: "; ") + "."
+    }
+
+    /// Sessions grouped into conference days, in time order. A new day starts after a gap of
+    /// six hours or more, so a schedule that crosses midnight (the demo shifts times to "now")
+    /// still counts as one day.
+    public static func scheduleDays(_ manifest: ConferenceManifest) -> [[Session]] {
+        let sorted = manifest.sessions.sorted { $0.startTime < $1.startTime }
+        var days: [[Session]] = []
+        var lastEnd: Date?
+        for session in sorted {
+            if let lastEnd, session.startTime.timeIntervalSince(lastEnd) < 6 * 3600, !days.isEmpty {
+                days[days.count - 1].append(session)
+            } else {
+                days.append([session])
+            }
+            lastEnd = max(lastEnd ?? session.endTime, session.endTime)
+        }
+        return days
+    }
+
+    /// "Day 2, Friday, April 17" style label.
+    public static func dayLabel(_ index: Int, days: [[Session]], catalog: ConferenceAskCatalog) -> String {
+        guard let first = days[index].first else { return "Day \(index + 1)" }
+        return "Day \(index + 1), \(catalog.manifest.clock.dayString(first.startTime))"
     }
 
     public static func favorites(catalog: ConferenceAskCatalog) -> String {
@@ -170,19 +219,44 @@ public enum ConferenceAskAnswers {
     private static func matchRoom(_ query: String, catalog: ConferenceAskCatalog) -> Room? {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
+        if let exact = catalog.manifest.rooms.first(where: { $0.name.compare(trimmed, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }) {
+            return exact
+        }
         return catalog.manifest.rooms.first { room in
             room.name.localizedStandardContains(trimmed) || trimmed.localizedStandardContains(room.name)
         }
     }
 
-    private static func resolveDay(_ query: String, catalog: ConferenceAskCatalog) -> Date? {
-        let days = catalog.manifest.conferenceDays
+    private static let dayWords = ["one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "first": 1, "second": 2, "third": 3]
+
+    private static func resolveDayIndex(_ query: String, days: [[Session]], catalog: ConferenceAskCatalog) -> Int? {
+        guard !days.isEmpty else { return nil }
         let lower = query.lowercased()
-        if let number = lower.split(whereSeparator: { !$0.isNumber }).first, let index = Int(number), index >= 1, index <= days.count {
-            return days[index - 1].start
+        if lower.contains("today") {
+            let index = days.firstIndex { day in
+                guard let last = day.map(\.endTime).max() else { return false }
+                return catalog.now <= last
+            }
+            return index ?? days.count - 1
         }
-        if lower.contains("today") { return catalog.manifest.clock.startOfDay(for: catalog.now) }
-        return days.first?.start
+        let number = lower.split(whereSeparator: { !$0.isNumber }).first.flatMap { Int($0) }
+            ?? dayWords.first { lower.split(separator: " ").contains(Substring($0.key)) }?.value
+        if let number { return number >= 1 && number <= days.count ? number - 1 : nil }
+        return 0
+    }
+
+    /// "day 2", "day two", "second day" -> the day slot text.
+    private static func dayNumberPhrase(in lower: String) -> String? {
+        let words = lower.replacingOccurrences(of: "?", with: " ").split(separator: " ").map(String.init)
+        for (i, word) in words.enumerated() {
+            if word == "day", i + 1 < words.count, Int(words[i + 1]) != nil || dayWords[words[i + 1]] != nil {
+                return words[i + 1]
+            }
+            if word == "day" || word == "day's", i > 0, dayWords[words[i - 1]] != nil {
+                return words[i - 1]
+            }
+        }
+        return nil
     }
 
     private static func daySlot(in lower: String) -> String {

@@ -75,7 +75,9 @@ public enum ConferenceAsk {
                         "conference": source.manifest.conference.name,
                         "timezone": source.manifest.conference.timezone
                     ],
-                    sections: [AskPromptSection(title: "SCHEDULE", text: ConferenceAsk.digest(source))]
+                    // No schedule digest: a rewrite that sees every session leaks other rooms into
+                    // room answers. Answers come from the skills' FACTS only.
+                    sections: []
                 )
             },
             chips: { _ in
@@ -91,8 +93,11 @@ public enum ConferenceAsk {
                 return AskRoute(skillID: classified.kind.skillID, slots: classified.slots)
             },
             guide: AskGuide(
-                routeRules: .append("When someone is speaking is whenSpeaking. A room is nextInRoom. Notes are summarizeNotes."),
-                replyInstructions: .append("Use only FACTS. Do not invent a session, room, or time.")
+                routeRules: .append(ConferenceAskPrompts.routeRules),
+                // Empty reply instructions turn off AskKit's model rewrite (writesReply == false), so the
+                // deterministic answer is what the person sees. A rewrite also sent "my schedule" to the
+                // calendar specialist, which fails when Calendar access is off.
+                replyInstructions: .replace("")
             )
         ))
     }
@@ -103,6 +108,7 @@ public enum ConferenceAsk {
             skill(source, kind: .nextInRoom, title: "Next in a room", summary: "What is on now or next in one room", slots: ["room"], notes: "What’s next in a room, lab, or stage."),
             skill(source, kind: .whatsNext, title: "What’s next", summary: "The live session or the next one", notes: "What’s next, what’s on now, with no room named."),
             skill(source, kind: .summarizeNotes, title: "Summarize notes", summary: "The person’s notes for a conference day", slots: ["day"], notes: "Summarize notes, notes from day 1, notes today."),
+            skill(source, kind: .dayAgenda, title: "A day's agenda", summary: "Every session on one conference day, in time order", slots: ["day"], notes: "What's on day 2, the day one schedule."),
             skill(source, kind: .favorites, title: "Saved sessions", summary: "The person’s favorites", notes: "My schedule, favorites, saved talks.")
         ]
     }
@@ -131,15 +137,6 @@ public enum ConferenceAsk {
                 return AskReply(text: answer.spoken, spoken: answer.spoken, facts: answer.facts)
             }
         )
-    }
-
-    private static func digest(_ source: ConferenceAskSource) -> String {
-        let clock = source.manifest.clock
-        return source.manifest.sessions.prefix(12).map { session in
-            let room = session.roomID.flatMap { source.manifest.room(id: $0)?.name } ?? ""
-            let people = source.manifest.speakers(ids: session.speakerIDs).map(\.name).joined(separator: ", ")
-            return "\(session.title) \(clock.rangeString(from: session.startTime, to: session.endTime)) \(room) \(people)"
-        }.joined(separator: "\n")
     }
 }
 #endif
