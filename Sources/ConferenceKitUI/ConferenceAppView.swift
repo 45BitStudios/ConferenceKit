@@ -142,6 +142,7 @@ public struct ConferenceAppView: View {
             navigation.pendingSpeakerID ?? "",
             navigation.pendingSearch ?? "",
             navigation.pendingSection?.rawValue ?? "",
+            navigation.pendingDestination?.rawValue ?? "",
             navigation.pendingShowsNotes ? "notes" : ""
         ].joined(separator: "|")
     }
@@ -163,6 +164,10 @@ public struct ConferenceAppView: View {
         if let section = navigation.pendingSection {
             router.section = section
             navigation.pendingSection = nil
+        }
+        if let destination = navigation.pendingDestination {
+            router.open(destination.route, push: push)
+            navigation.pendingDestination = nil
         }
         if let query = navigation.pendingSearch {
             store.searchText = query

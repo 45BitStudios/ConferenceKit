@@ -17,6 +17,9 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
     public var sponsors: [Sponsor]
     public var organizers: [Organizer]
     public var announcements: [Announcement]
+    public var news: [ConferenceNewsItem]
+    public var resources: [ConferenceResource]
+    public var pass: ConferencePass?
     public var codeOfConduct: CodeOfConduct?
     public var wifi: WiFiInfo?
 
@@ -31,6 +34,9 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
         sponsors: [Sponsor] = [],
         organizers: [Organizer] = [],
         announcements: [Announcement] = [],
+        news: [ConferenceNewsItem] = [],
+        resources: [ConferenceResource] = [],
+        pass: ConferencePass? = nil,
         codeOfConduct: CodeOfConduct? = nil,
         wifi: WiFiInfo? = nil
     ) {
@@ -44,6 +50,9 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
         self.sponsors = sponsors
         self.organizers = organizers
         self.announcements = announcements
+        self.news = news
+        self.resources = resources
+        self.pass = pass
         self.codeOfConduct = codeOfConduct
         self.wifi = wifi
     }
@@ -153,7 +162,26 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, conference, theme, tracks, rooms, speakers, sessions
-        case sponsors, organizers, announcements, codeOfConduct, wifi
+        case sponsors, organizers, announcements, news, resources, pass, codeOfConduct, wifi
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encode(conference, forKey: .conference)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(tracks, forKey: .tracks)
+        try container.encode(rooms, forKey: .rooms)
+        try container.encode(speakers, forKey: .speakers)
+        try container.encode(sessions, forKey: .sessions)
+        try container.encode(sponsors, forKey: .sponsors)
+        try container.encode(organizers, forKey: .organizers)
+        try container.encode(announcements, forKey: .announcements)
+        try container.encode(news, forKey: .news)
+        try container.encode(resources, forKey: .resources)
+        try container.encodeIfPresent(pass, forKey: .pass)
+        try container.encodeIfPresent(codeOfConduct, forKey: .codeOfConduct)
+        try container.encodeIfPresent(wifi, forKey: .wifi)
     }
 
     public init(from decoder: Decoder) throws {
@@ -168,6 +196,9 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
         sponsors = try container.decodeIfPresent([Sponsor].self, forKey: .sponsors) ?? []
         organizers = try container.decodeIfPresent([Organizer].self, forKey: .organizers) ?? []
         announcements = try container.decodeIfPresent([Announcement].self, forKey: .announcements) ?? []
+        news = try container.decodeIfPresent([ConferenceNewsItem].self, forKey: .news) ?? []
+        resources = try container.decodeIfPresent([ConferenceResource].self, forKey: .resources) ?? []
+        pass = try container.decodeIfPresent(ConferencePass.self, forKey: .pass)
         codeOfConduct = try container.decodeIfPresent(CodeOfConduct.self, forKey: .codeOfConduct)
         wifi = try container.decodeIfPresent(WiFiInfo.self, forKey: .wifi)
     }

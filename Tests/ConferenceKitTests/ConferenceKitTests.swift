@@ -19,6 +19,9 @@ import Testing
     let manifest = try ConferenceLoader().decode(data: json)
     #expect(manifest.sessions.isEmpty)
     #expect(manifest.sponsors.isEmpty)
+    #expect(manifest.news.isEmpty)
+    #expect(manifest.resources.isEmpty)
+    #expect(manifest.pass == nil)
     #expect(manifest.wifi == nil)
     #expect(manifest.schemaVersion == "1.0")
 }
@@ -197,6 +200,10 @@ import Testing
     #expect(venue.first?.name == "Navy Pier")
     let days = try await DayEntityQuery().suggestedEntities()
     #expect(days.count == 2)
+    let news = try await ConferenceNewsItemEntityQuery().suggestedEntities()
+    #expect(news.map(\.id) == ["sg-doors", "sg-slides", "sg-workshops"])
+    let resources = try await ConferenceResourceEntityQuery().entities(matching: "map")
+    #expect(resources.map(\.id) == ["sg-venue-map"])
     await ConferenceCatalog.shared.reset()
 }
 

@@ -168,6 +168,18 @@ struct WatchShell: View {
                     }
                 }
                 .navigationTitle("Speakers")
+                List {
+                    NavigationLink(value: ConferenceRoute.news) {
+                        Label("News", systemImage: "newspaper")
+                    }
+                    NavigationLink(value: ConferenceRoute.resources) {
+                        Label("Resources", systemImage: "doc")
+                    }
+                    NavigationLink(value: ConferenceRoute.pass) {
+                        Label("Pass", systemImage: "ticket")
+                    }
+                }
+                .navigationTitle("More")
             }
             .tabViewStyle(.verticalPage)
             .navigationDestination(for: ConferenceRoute.self) { route in

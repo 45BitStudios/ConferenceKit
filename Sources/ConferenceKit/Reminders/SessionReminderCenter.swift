@@ -173,4 +173,23 @@ enum NotificationReminderBackend {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
         #endif
     }
+
+    /// News announcements. Separate from session alarms so a missing AlarmKit
+    /// entitlement never blocks them: this is always a local notification.
+    static func scheduleAnnouncements(_ notices: [AnnouncementNotice]) async {
+        #if canImport(UserNotifications) && !os(tvOS)
+        let center = UNUserNotificationCenter.current()
+        for notice in notices {
+            let content = UNMutableNotificationContent()
+            content.title = notice.title
+            content.body = notice.body.isEmpty ? "New announcement." : notice.body
+            content.sound = .default
+            content.categoryIdentifier = "conferencekit.announcement"
+            content.userInfo = ["newsID": notice.newsID]
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+            let request = UNNotificationRequest(identifier: notice.identifier, content: content, trigger: trigger)
+            try? await center.add(request)
+        }
+        #endif
+    }
 }

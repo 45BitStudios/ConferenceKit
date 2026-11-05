@@ -39,7 +39,9 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 | Sponsors and tiers | iOS Conf SG prospectus, Swift conferences | Implemented. |
 | Organizers | Conference sites | Implemented. |
 | Code of conduct | try! Swift, SwiftLeeds, most community conferences | Implemented. |
-| Announcements / news | Whova, conference Twitter/X feeds | Implemented as manifest items, not a social feed. |
+| Announcements / news | Whova, conference Twitter/X feeds | Implemented. Manifest `announcements` stay. `news` is a separate feed: pinned first, then newest, with an optional link and symbol. List on iOS and watchOS, a column on macOS and visionOS, cards on tvOS. |
+| Resources | Session slides, venue maps | Implemented. Grouped by category. PDF and doc download with progress and Quick Look on iOS, macOS, and visionOS. Links open in the browser. |
+| Conference pass | Event ticket | Implemented as a barcode ticket. Add to Wallet on iOS once a pass is signed. Other platforms show a QR code. |
 | Wi-Fi | Whova, attendee emails | Implemented. Reveal and copy the password. |
 | Time zones | Anyone flying to Singapore | Implemented. Conference zone for days; toggle conference time vs device time; both shown when they differ. |
 | Offline JSON and remote refresh | Organizers who change a room without an App Store release | Implemented. Cache, then refresh. Stale banner if refresh fails. |
@@ -66,16 +68,16 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 
 | Feature | Status |
 | --- | --- |
-| App entities | Implemented. Conference, Day, Session, Speaker, Track, Room, Venue, Sponsor, Session Note. String queries on each. |
+| App entities | Implemented. Conference, Day, Session, Speaker, Track, Room, Venue, Sponsor, Session Note, News Item, Resource. String queries on each. |
 | App enums | Implemented. Session kind, sponsor tier, reminder lead. |
-| Intents | Implemented. Open session, open speaker, what’s next, my schedule today, search, favorite, unfavorite, favorite next, add one or all favorites to Calendar, set reminder, add note, show notes, export notes. |
+| Intents | Implemented. Open session, open speaker, what’s next, my schedule today, search, favorite, unfavorite, favorite next, add one or all favorites to Calendar, set reminder, add note, show notes, export notes, show latest news, show resources. |
 | Assistant schema | Implemented for `system.search` on iOS, macOS, and visionOS. See the PR for the `criteria.term` assumption. |
 | Spotlight | Implemented for sessions and speakers. The Siri AI preview flag also indexes the conference, days, tracks, rooms, venue, sponsors, notes, and My Schedule. |
 | App Shortcuts template | Implemented. The host app target must declare the provider. The package includes `ConferenceAppShortcuts` and `ConferenceShortcutTemplate`. |
 | Widgets | Implemented for iOS, macOS, and watchOS. Up Next, Now, My Schedule, Countdown, Favorite (configurable), accessory families, watch corner complication, interactive favorite. |
 | Control widget | Implemented. iOS 18 Favorite Next control. |
 | AlarmKit | Implemented, off by default. `setUseAlarmKit(true)` registers it. The entitlement is not approved, so the default reminder is a local notification. Fixed alarms only. No countdown Live Activity. |
-| Notification fallback | Implemented where UserNotifications exists. |
+| Notification fallback | Implemented where UserNotifications exists. News announcements use that path only. AlarmKit is never used for them. |
 | Calendar | Implemented. Write-only access on iOS and visionOS, full access on macOS, legacy request on watchOS. Drafts are pure and tested. tvOS has no EventKit. |
 
 ## Siri AI Developer Preview (opt-in, Xcode 27.3)
@@ -100,7 +102,7 @@ Off unless `SIRI_AI_PREVIEW` is set. The default Xcode 27.2 build does not compi
 | Attendee messaging, meeting booking, people discovery | Whova and Grip. Needs accounts and a server. A JSON kit cannot do this honestly. |
 | Push from a server | Host infrastructure. Local alarms and notifications cover the on-device case. |
 | In-app video playback | Optional `recordingURL` opens out. A player, DRM, and offline video are a different product. |
-| Tickets and registration | Commerce stays on the web. |
+| Tickets and registration | Commerce and check-in stay on the web. The on-device ticket pass does not sell or validate tickets. |
 | Surveys and session ratings | Needs a backend and a moderation story. |
 | Indoor wayfinding | A pin, address, directions text, and an Apple Maps link. Not a floor plan. |
 | Badge QR and check-in | Privacy-sensitive and needs the registration system. |

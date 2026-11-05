@@ -15,6 +15,9 @@
     "sponsors": { "type": "array", "items": { "$ref": "#/$defs/sponsor" } },
     "organizers": { "type": "array", "items": { "$ref": "#/$defs/organizer" } },
     "announcements": { "type": "array", "items": { "$ref": "#/$defs/announcement" } },
+    "news": { "type": "array", "items": { "$ref": "#/$defs/newsItem" } },
+    "resources": { "type": "array", "items": { "$ref": "#/$defs/resource" } },
+    "pass": { "$ref": "#/$defs/pass" },
     "codeOfConduct": { "$ref": "#/$defs/conduct" },
     "wifi": { "$ref": "#/$defs/wifi" }
   },
@@ -152,6 +155,47 @@
         "body": { "type": "string" },
         "postedAt": { "type": "string", "format": "date-time" },
         "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "newsItem": {
+      "type": "object",
+      "required": ["id", "title", "body", "publishedAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "linkURL": { "type": "string", "format": "uri" },
+        "imageName": { "type": "string", "description": "SF Symbol name shown beside the item." },
+        "isPinned": { "type": "boolean" },
+        "announces": { "type": "boolean", "description": "When true, the app may post a local notification the first time this item is seen." }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "required": ["id", "title", "kind", "remoteURL", "category"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "kind": { "enum": ["pdf", "doc", "link"] },
+        "remoteURL": { "type": "string", "format": "uri" },
+        "localFilename": { "type": "string" },
+        "fileSizeBytes": { "type": "integer" },
+        "category": { "type": "string", "description": "Grouping key such as slides, map, or sponsor." }
+      }
+    },
+    "pass": {
+      "type": "object",
+      "required": ["id", "attendeeName", "conferenceName", "seatOrTicketType", "barcodePayload", "relevantDate", "venueName"],
+      "properties": {
+        "id": { "type": "string" },
+        "attendeeName": { "type": "string" },
+        "conferenceName": { "type": "string" },
+        "seatOrTicketType": { "type": "string" },
+        "barcodePayload": { "type": "string" },
+        "relevantDate": { "type": "string", "format": "date-time" },
+        "venueName": { "type": "string" },
+        "venueAddress": { "type": "string" }
       }
     },
     "conduct": {

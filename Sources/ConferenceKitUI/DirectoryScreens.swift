@@ -86,6 +86,13 @@ struct InfoDetail: View {
             if let item = store.announcements.first(where: { $0.id == id }) {
                 AnnouncementDetail(item: item)
             }
+        case .news: NewsFeedScreen(store: store, router: router, push: push)
+        case .newsItem(let id):
+            NewsDetail(item: store.newsItems.first { $0.id == id })
+        case .resources: ResourceListScreen(store: store, router: router, push: push)
+        case .resource(let id):
+            ResourceDetailScreen(store: store, resource: store.resources.first { $0.id == id })
+        case .pass: PassScreen(store: store)
         case .sponsors: SponsorList(store: store)
         case .organizers: OrganizerList(store: store)
         case .workshops: ScheduleList(store: store, router: router, push: push, workshopsOnly: true)
@@ -346,7 +353,12 @@ struct SettingsScreen: View {
                 get: { store.reminderPreferences.enabled },
                 set: { enabled in
                     store.setRemindersEnabled(enabled)
-                    Task { await ConferenceActions.syncReminders(store) }
+                    Task {
+                        if enabled {
+                            _ = await SessionReminderCenter.shared.requestAuthorization()
+                        }
+                        await ConferenceActions.syncReminders(store)
+                    }
                 }
             ))
             Picker("Lead time", selection: Binding(
@@ -362,6 +374,30 @@ struct SettingsScreen: View {
                 Text("15 minutes").tag(15.0 * 60)
                 Text("30 minutes").tag(30.0 * 60)
             }
+            Toggle("Announcement notifications", isOn: Binding(
+                get: { store.announcementNotificationsEnabled },
+                set: { enabled in
+                    store.setAnnouncementNotificationsEnabled(enabled)
+                    Task {
+                        guard let id = store.manifest?.conference.id else { return }
+                        let defaults = ConferenceKitConfiguration.shared.resolvedDefaults()
+                        if enabled {
+                            _ = await NewsNotificationCenter.sync(
+                                items: store.newsItems,
+                                conferenceID: id,
+                                enabled: true,
+                                defaults: defaults,
+                                requestPermission: true
+                            )
+                        } else {
+                            await NewsNotificationCenter.cancel(conferenceID: id, defaults: defaults)
+                        }
+                    }
+                }
+            ))
+            Text("News marked as an announcement uses a local notification. AlarmKit is not involved. tvOS cannot show alerts.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
             #if os(iOS)
             AlarmOptIn(store: store)
             Toggle("Outer display companion", isOn: $router.coverCompanionEnabled)

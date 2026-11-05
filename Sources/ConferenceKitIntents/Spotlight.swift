@@ -25,6 +25,28 @@ extension SpeakerEntity: IndexedEntity {
         return attributes
     }
 }
+
+@available(iOS 18.0, macOS 15.0, watchOS 11.0, visionOS 2.0, *)
+extension ConferenceNewsItemEntity: IndexedEntity {
+    public var attributeSet: CSSearchableItemAttributeSet {
+        let attributes = defaultAttributeSet
+        attributes.title = title
+        attributes.contentDescription = body
+        attributes.keywords = isPinned ? ["news", "pinned"] : ["news"]
+        return attributes
+    }
+}
+
+@available(iOS 18.0, macOS 15.0, watchOS 11.0, visionOS 2.0, *)
+extension ConferenceResourceEntity: IndexedEntity {
+    public var attributeSet: CSSearchableItemAttributeSet {
+        let attributes = defaultAttributeSet
+        attributes.title = title
+        attributes.contentDescription = "\(category) \(kind)"
+        attributes.keywords = ["resource", category, kind]
+        return attributes
+    }
+}
 #endif
 
 public enum ConferenceSpotlight {
@@ -37,6 +59,8 @@ public enum ConferenceSpotlight {
         let speakers = manifest.speakers.map(SpeakerEntity.init)
         try? await index.indexAppEntities(sessions)
         try? await index.indexAppEntities(speakers)
+        try? await index.indexAppEntities(NewsFeed.sorted(manifest.news).map(ConferenceNewsItemEntity.init))
+        try? await index.indexAppEntities(manifest.resources.map(ConferenceResourceEntity.init))
         #endif
     }
 }

@@ -161,6 +161,49 @@ public struct ShowNotesTool: AppIntent {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 @AppIntent(.tool)
+public struct ShowLatestNewsTool: AppIntent {
+    public static let title: LocalizedStringResource = "Show Latest News"
+    public static let description = IntentDescription(
+        LocalizedStringResource("Reads the latest conference news, with pinned announcements first."),
+        searchKeywords: [LocalizedStringResource("news"), LocalizedStringResource("announcement"), LocalizedStringResource("what's new")]
+    )
+
+    public init() {}
+
+    @MainActor
+    public func perform() async throws -> some IntentResult & ProvidesDialog {
+        _ = try await ShowLatestNewsIntent().perform()
+        guard let manifest = await IntentCatalog.manifest(), let top = NewsFeed.sorted(manifest.news).first else {
+            return .result(dialog: IntentDialog("There’s no news yet."))
+        }
+        return .result(dialog: IntentDialog(stringLiteral: top.title))
+    }
+}
+
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+@AppIntent(.tool)
+public struct ShowResourcesTool: AppIntent {
+    public static let title: LocalizedStringResource = "Show Resources"
+    public static let description = IntentDescription(
+        LocalizedStringResource("Lists downloadable slides, maps, and other conference documents."),
+        searchKeywords: [LocalizedStringResource("resources"), LocalizedStringResource("slides"), LocalizedStringResource("map")]
+    )
+
+    public init() {}
+
+    @MainActor
+    public func perform() async throws -> some IntentResult & ProvidesDialog {
+        _ = try await ShowResourcesIntent().perform()
+        guard let manifest = await IntentCatalog.manifest() else {
+            return .result(dialog: IntentDialog("No conference is loaded."))
+        }
+        let count = manifest.resources.count
+        return .result(dialog: IntentDialog(stringLiteral: count == 1 ? "1 resource." : "\(count) resources."))
+    }
+}
+
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+@AppIntent(.tool)
 public struct ExportNotesTool: AppIntent {
     public static let title: LocalizedStringResource = "Export Notes"
     public static let description = IntentDescription(
@@ -468,6 +511,8 @@ enum ConferenceSiriPreviewIndex {
             ])
         }
         try? await index.indexAppEntities(manifest.sponsors.map(SponsorEntity.init))
+        try? await index.indexAppEntities(NewsFeed.sorted(manifest.news).map(ConferenceNewsItemEntity.init))
+        try? await index.indexAppEntities(manifest.resources.map(ConferenceResourceEntity.init))
         let notes = await MainActor.run { notesStore(manifest: manifest).notes }
         let noteEntities = notes.map { SessionNoteEntity($0, manifest: manifest) }
         try? await index.indexAppEntities(noteEntities)
