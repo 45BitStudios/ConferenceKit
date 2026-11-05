@@ -53,7 +53,7 @@ import Contacts
     // "Sam" matches Jordan's public company "Sample Conf". Sam Okonkwo is not in that result.
     let samHits = ConferenceSearch.attendees(in: manifest, matching: AttendeeFilter(query: "Sam"))
     #expect(!samHits.contains { $0.id == "sam-okonkwo" })
-    #expect(samHits.allSatisfy(\.privacy.discoverable))
+    #expect(samHits.allSatisfy { $0.privacy.discoverable })
     #expect(ConferenceSearch.attendees(in: manifest, matching: AttendeeFilter(query: "Okonkwo")).isEmpty)
     #expect(ConferenceSearch.attendees(in: manifest, matching: AttendeeFilter(query: "Lumen")).isEmpty)
     #expect(ConferenceSearch.attendees(in: manifest, matching: AttendeeFilter(query: "Maya", ticketKind: "full")).map(\.id) == ["maya-chen"])
