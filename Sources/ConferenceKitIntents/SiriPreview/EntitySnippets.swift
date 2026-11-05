@@ -7,6 +7,12 @@ import SwiftUI
 // Public DocC, beta in the 27.3 SDK:
 //   https://developer.apple.com/documentation/appintents/snippetrepresentableentity
 //   https://developer.apple.com/documentation/appintents/cardsnippet
+// SDK declaration, from the 27.3 symbol graph:
+//   associatedtype Body: EntitySnippetContent where Self == Self.Body.Entity
+//   @EntitySnippetContentBuilder<Self> static var snippet: Self.Body { get }
+// The DocC sample writes `some EntitySnippetContent`. That does not fix Body.Entity
+// to Self, so the compiler reports a missing Body. `some EntitySnippetContent<Self>`
+// is the witness that satisfies the where clause.
 // `SnippetRepresentableEntity.snippet` returns a `CardSnippet` for
 // `CardSnippetFamily.standard`. The system archives the view ahead of time, so the
 // closure only reads fields already on the entity. Buttons run app intents; after
@@ -31,7 +37,7 @@ func entitySnippetDensity(_ context: CardSnippetContext) -> EntitySnippetDensity
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension SessionEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { session, context in
             SessionEntityCard(session: session, density: entitySnippetDensity(context))
         }
@@ -40,7 +46,7 @@ extension SessionEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension SpeakerEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { speaker, context in
             SpeakerEntityCard(speaker: speaker, density: entitySnippetDensity(context))
         }
@@ -49,7 +55,7 @@ extension SpeakerEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension SessionNoteEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { note, context in
             SessionNoteEntityCard(note: note, density: entitySnippetDensity(context))
         }
@@ -58,7 +64,7 @@ extension SessionNoteEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension ConferenceEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { conference, context in
             ConferenceEntityCard(conference: conference, density: entitySnippetDensity(context))
         }
@@ -67,7 +73,7 @@ extension ConferenceEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension RoomEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { room, context in
             RoomEntityCard(room: room, density: entitySnippetDensity(context))
         }
@@ -76,7 +82,7 @@ extension RoomEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension VenueEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { venue, context in
             VenueEntityCard(venue: venue, density: entitySnippetDensity(context))
         }
@@ -85,7 +91,7 @@ extension VenueEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension FavoriteScheduleEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { schedule, context in
             FavoriteScheduleEntityCard(schedule: schedule, density: entitySnippetDensity(context))
         }
@@ -94,7 +100,7 @@ extension FavoriteScheduleEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension SiriSessionEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { session, context in
             SiriSessionEntityCard(session: session, density: entitySnippetDensity(context))
         }
@@ -103,7 +109,7 @@ extension SiriSessionEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension SiriSpeakerEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { speaker, context in
             SiriSpeakerEntityCard(speaker: speaker, density: entitySnippetDensity(context))
         }
@@ -112,7 +118,7 @@ extension SiriSpeakerEntity: SnippetRepresentableEntity {
 
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 extension SiriNoteEntity: SnippetRepresentableEntity {
-    public static var snippet: some EntitySnippetContent {
+    public static var snippet: some EntitySnippetContent<Self> {
         CardSnippet(supportedFamilies: [.standard]) { note, context in
             SiriNoteEntityCard(note: note, density: entitySnippetDensity(context))
         }
