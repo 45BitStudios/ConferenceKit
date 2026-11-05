@@ -7,6 +7,6 @@ import Foundation
 /// remote JSON, and the kit owns schedule, speakers, theme, and layouts.
 public enum ConferenceKit {
     /// Documents may omit every 1.1 field. 1.0 manifests still decode.
-    public static let schemaVersion = "1.1"
+    public static let schemaVersion = "1.2"
     public static let minimumSchemaVersion = "1.0"
 }

@@ -17,6 +17,8 @@ public final class ConferenceStore {
     public var searchText = ""
     public var timeDisplay: TimeDisplay = .conference
     public var reminderPreferences = ReminderPreferences.default
+    public private(set) var announcementNotificationsEnabled: Bool
+    public private(set) var resourceLibrary: ResourceLibrary?
 
     private let loader: ConferenceLoader
     private let source: ConferenceSource
@@ -35,6 +37,7 @@ public final class ConferenceStore {
         if let stored = ReminderPreferences.load(from: configuration.resolvedDefaults()) {
             reminderPreferences = stored
         }
+        announcementNotificationsEnabled = AnnouncementLedger.isEnabled(configuration.resolvedDefaults())
     }
 
     public var conferenceName: String {
@@ -72,6 +75,11 @@ public final class ConferenceStore {
     public var announcements: [Announcement] {
         (manifest?.announcements ?? []).sorted { $0.postedAt > $1.postedAt }
     }
+    public var newsItems: [ConferenceNewsItem] {
+        NewsFeed.sorted(manifest?.news ?? [])
+    }
+    public var resources: [ConferenceResource] { manifest?.resources ?? [] }
+    public var conferencePass: ConferencePass? { manifest?.pass }
     public var workshops: [Session] { manifest?.workshops ?? [] }
 
     public var liveSessions: [Session] {
@@ -165,6 +173,11 @@ public final class ConferenceStore {
         persistReminderPreferences()
     }
 
+    public func setAnnouncementNotificationsEnabled(_ enabled: Bool) {
+        announcementNotificationsEnabled = enabled
+        AnnouncementLedger.setEnabled(enabled, defaults: configuration.resolvedDefaults())
+    }
+
     private func persistReminderPreferences() {
         reminderPreferences.save(to: configuration.resolvedDefaults())
         publishSnapshot()
@@ -178,6 +191,10 @@ public final class ConferenceStore {
         if notesStore?.conferenceID != loaded.conference.id {
             notesStore = NotesStore(conferenceID: loaded.conference.id, configuration: configuration)
         }
+        resourceLibrary = ResourceLibrary(
+            directory: configuration.resourcesDirectory(conferenceID: loaded.conference.id),
+            resources: loaded.resources
+        )
         publishSnapshot()
         let sessions = favorites.ids
         let speakers = favorites.speakerIDs

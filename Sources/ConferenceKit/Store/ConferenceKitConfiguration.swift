@@ -74,12 +74,20 @@ public final class ConferenceKitConfiguration: @unchecked Sendable {
     }
 
     public func notesDirectory(conferenceID: String) -> URL {
+        supportDirectory(conferenceID: conferenceID, folder: "Notes")
+    }
+
+    public func resourcesDirectory(conferenceID: String) -> URL {
+        supportDirectory(conferenceID: conferenceID, folder: "Resources")
+    }
+
+    private func supportDirectory(conferenceID: String, folder: String) -> URL {
         let root = appGroupContainer()
             ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? cacheDirectory()
         return root
             .appendingPathComponent("ConferenceKit", isDirectory: true)
-            .appendingPathComponent("Notes", isDirectory: true)
+            .appendingPathComponent(folder, isDirectory: true)
             .appendingPathComponent(conferenceID, isDirectory: true)
     }
 }

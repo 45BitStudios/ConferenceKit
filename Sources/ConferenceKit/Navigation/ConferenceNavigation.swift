@@ -1,6 +1,12 @@
 import Foundation
 import Observation
 
+public enum ConferenceDestination: String, Codable, Hashable, Sendable {
+    case news
+    case resources
+    case pass
+}
+
 public enum ConferenceSection: String, Codable, Hashable, Sendable, CaseIterable, Identifiable {
     case schedule
     case speakers
@@ -42,6 +48,7 @@ public final class ConferenceNavigation {
     public var pendingSpeakerID: String?
     public var pendingSearch: String?
     public var pendingSection: ConferenceSection?
+    public var pendingDestination: ConferenceDestination?
     public var pendingShowsNotes = false
     public var sceneActivationError: String?
     public var reminderMessage: String?
@@ -69,6 +76,11 @@ public final class ConferenceNavigation {
 
     public func show(_ section: ConferenceSection) {
         pendingSection = section
+    }
+
+    public func showDestination(_ destination: ConferenceDestination) {
+        pendingSection = .info
+        pendingDestination = destination
     }
 
     public func reportSceneActivationFailure(_ message: String) {

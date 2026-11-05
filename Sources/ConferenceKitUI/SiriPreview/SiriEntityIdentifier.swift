@@ -9,6 +9,8 @@ enum SiriRowEntity {
     case session(String)
     case speaker(String)
     case note(UUID)
+    case news(String)
+    case resource(String)
 }
 
 extension View {
@@ -24,6 +26,10 @@ extension View {
                 appEntityIdentifier(EntityIdentifier(for: SpeakerEntity.self, identifier: id))
             case .note(let id):
                 appEntityIdentifier(EntityIdentifier(for: SessionNoteEntity.self, identifier: id.uuidString))
+            case .news(let id):
+                appEntityIdentifier(EntityIdentifier(for: ConferenceNewsItemEntity.self, identifier: id))
+            case .resource(let id):
+                appEntityIdentifier(EntityIdentifier(for: ConferenceResourceEntity.self, identifier: id))
             }
         } else {
             self

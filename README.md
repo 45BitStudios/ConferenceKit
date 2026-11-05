@@ -121,7 +121,7 @@ The app writes `conference-snapshot.json` into the app group (or the cache) when
 
 See `schema/conference.schema.json` and `Sources/ConferenceKit/Resources/SampleConference.json`.
 
-Schema 1.0 documents still decode. Sponsors, organizers, announcements, code of conduct, Wi-Fi, coordinates, `slidesURL`, and `recordingURL` are optional.
+Schema 1.0 documents still decode. Sponsors, organizers, announcements, news, resources, a pass, code of conduct, Wi-Fi, coordinates, `slidesURL`, and `recordingURL` are optional. The current document version is 1.2.
 
 Session times are ISO-8601 with a numeric offset. Day grouping uses `conference.timezone`, not the device zone.
 
@@ -153,6 +153,18 @@ Docs used for this layout:
 - [Get ready for iPhone Duo](https://developer.apple.com/iphone-duo/)
 - Tech talks 111461 (Prepare your app), 111463 (Strike a pose), 111464 (multiple displays and scenes)
 
+## News, resources, and the pass
+
+News is a manifest array (`news`). The feed shows pinned items first, then newest. The sample JSON includes three SG Conf items. `Show Latest News` is an App Intent. Siri entity snippets (`SnippetRepresentableEntity` in `EntitySnippets.swift`) are not on this branch; they live on the open entity-snippet PR.
+
+Resources (`resources`) group by `category` (`slides`, `map`, `sponsor`, or any other string). PDFs and documents download into Application Support (or the app group) with progress. Links open in the browser. Quick Look is iOS, visionOS, and macOS. The sample remote URLs under `iosconf.sg` are placeholders until the real files exist. `Show Resources` is an App Intent.
+
+The pass (`pass`) is an event ticket: attendee, conference, seat or ticket type, barcode payload, relevant date, and venue. iOS shows Add to Wallet. `PassBuilder` writes `pass.json`, `manifest.json` (SHA-1), and an unsigned zip. It does not sign. Wallet needs Vince’s Pass Type ID and the Pass Type ID certificate, plus `icon.png`, before `PKAddPassesViewController` can add anything. The placeholder pass type id is `pass.studio45.conferencekit.sgconf` and the placeholder team id is `TEAMID`. macOS, tvOS, watchOS, and visionOS show the ticket QR instead. No signing change is made in this package.
+
+Announcement notifications are local `UserNotifications` for news items with `announces: true`. Settings has a toggle. The first delivery asks for permission only when that toggle is turned on. They do not use AlarmKit. Session reminders still prefer AlarmKit only after the opt-in, and fall back to a notification because that entitlement is not approved. tvOS cannot display either alert.
+
+`ConferenceAppShortcuts` stays at ten shortcuts. Export Conference Notes is still an intent; it is no longer a donated App Shortcut, so Latest News and Show Resources fit in the cap.
+
 ## Notes
 
 Notes are JSON files, not SwiftData, so the same store works on every platform the package declares and can live in the app group. Export from Info → My Notes, or with the Export Conference Notes intent. The Markdown is grouped by conference day and session and includes the room, speakers, timestamps, stars, and takeaways.
@@ -178,8 +190,8 @@ Enable it with Xcode 27.3 by adding `swiftSettings: [.define("SIRI_AI_PREVIEW")]
 
 What that flag turns on:
 
-- `@AppIntent(.tool)` tools for what’s next, find session, favorite, add note, show notes, and export notes. Titles and parameter descriptions are written for the model.
-- Spotlight indexing for the conference, days, sessions, speakers, tracks, rooms, the venue, sponsors, notes, and My Schedule, plus `@ComputedProperty` / `@DeferredProperty` indexing on session, speaker, and note text.
+- `@AppIntent(.tool)` tools for what’s next, find session, favorite, add note, show notes, export notes, latest news, and resources. Titles and parameter descriptions are written for the model.
+- Spotlight indexing for the conference, days, sessions, speakers, tracks, rooms, the venue, sponsors, notes, news, resources, and My Schedule, plus `@ComputedProperty` / `@DeferredProperty` indexing on session, speaker, and note text.
 - A generable `SessionQueryEntity` (`@AppEntity(.generable)`) so a search can be filled from the request.
 - Branded snippet cards for a session or a speaker. The snippet result API is the part not shown as a full sample in the preview article.
 - A Live Activity and an `NSUserActivity` while a session is on screen, so “add a note: …” can use the foreground session without the app name.
@@ -188,6 +200,6 @@ What that flag turns on:
 
 ## Tests
 
-`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, and the Ask answers.
+`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, the Ask answers, news sorting, resource download state, and the pass manifest.
 
 Xcode 27.2 already built the previous head (880385a) for iOS, iOS Simulator, macOS, watchOS, tvOS, and visionOS, and `swift test` passed. This follow-up was not compiled here. The matrix in `docs/FeatureMatrix.md` is the list of what is implemented versus deliberately left out.

@@ -9,6 +9,11 @@ enum ConferenceRoute: Hashable {
     case wifi
     case announcements
     case announcement(String)
+    case news
+    case newsItem(String)
+    case resources
+    case resource(String)
+    case pass
     case sponsors
     case organizers
     case workshops
@@ -17,14 +22,27 @@ enum ConferenceRoute: Hashable {
     case settings
 }
 
+extension ConferenceDestination {
+    var route: ConferenceRoute {
+        switch self {
+        case .news: .news
+        case .resources: .resources
+        case .pass: .pass
+        }
+    }
+}
+
 enum InfoRoute: String, CaseIterable, Identifiable {
-    case venue, wifi, announcements, sponsors, organizers, workshops, notes, conduct, settings
+    case venue, wifi, announcements, news, resources, pass, sponsors, organizers, workshops, notes, conduct, settings
     var id: String { rawValue }
     var title: String {
         switch self {
         case .venue: "Venue"
         case .wifi: "Wi-Fi"
         case .announcements: "Announcements"
+        case .news: "News"
+        case .resources: "Resources"
+        case .pass: "Pass"
         case .sponsors: "Sponsors"
         case .organizers: "Organizers"
         case .workshops: "Workshops"
@@ -38,6 +56,9 @@ enum InfoRoute: String, CaseIterable, Identifiable {
         case .venue: "mappin.and.ellipse"
         case .wifi: "wifi"
         case .announcements: "megaphone"
+        case .news: "newspaper"
+        case .resources: "doc"
+        case .pass: "ticket"
         case .sponsors: "heart"
         case .organizers: "person.crop.rectangle.stack"
         case .workshops: "hammer"
@@ -51,6 +72,9 @@ enum InfoRoute: String, CaseIterable, Identifiable {
         case .venue: .venue
         case .wifi: .wifi
         case .announcements: .announcements
+        case .news: .news
+        case .resources: .resources
+        case .pass: .pass
         case .sponsors: .sponsors
         case .organizers: .organizers
         case .workshops: .workshops

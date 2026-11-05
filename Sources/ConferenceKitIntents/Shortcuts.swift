@@ -98,13 +98,25 @@ public struct ConferenceAppShortcuts: AppShortcutsProvider {
                 shortTitle: "Show Notes",
                 systemImageName: "note.text"
             )
+            // Export Conference Notes remains an intent. It is not an App Shortcut so this
+            // list stays at the 10-shortcut cap, which now includes news and resources.
             AppShortcut(
-                intent: ExportConferenceNotesIntent(),
+                intent: ShowLatestNewsIntent(),
                 phrases: [
-                    "Export my notes from \(.applicationName)"
+                    "Latest news in \(.applicationName)",
+                    "Show news in \(.applicationName)"
                 ],
-                shortTitle: "Export Notes",
-                systemImageName: "square.and.arrow.up"
+                shortTitle: "Latest News",
+                systemImageName: "newspaper"
+            )
+            AppShortcut(
+                intent: ShowResourcesIntent(),
+                phrases: [
+                    "Show resources in \(.applicationName)",
+                    "Show the slides in \(.applicationName)"
+                ],
+                shortTitle: "Resources",
+                systemImageName: "doc"
             )
     }
 

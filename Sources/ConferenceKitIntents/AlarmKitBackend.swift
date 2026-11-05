@@ -121,11 +121,19 @@ public enum ConferenceIntentsBootstrap {
         #if SIRI_AI_PREVIEW && (os(iOS) || os(macOS) || os(visionOS))
         await ConferenceSiriPreviewIndex.reindex(manifest)
         #endif
+        let defaults = ConferenceKitConfiguration.shared.resolvedDefaults()
         _ = await SessionReminderCenter.shared.sync(
             manifest: manifest,
             favoriteIDs: store.favorites.ids,
             preferences: store.reminderPreferences,
-            defaults: ConferenceKitConfiguration.shared.resolvedDefaults()
+            defaults: defaults
+        )
+        _ = await NewsNotificationCenter.sync(
+            items: manifest.news,
+            conferenceID: manifest.conference.id,
+            enabled: store.announcementNotificationsEnabled,
+            defaults: defaults,
+            requestPermission: false
         )
         ConferenceAppShortcuts.updateAppShortcutParameters()
     }
