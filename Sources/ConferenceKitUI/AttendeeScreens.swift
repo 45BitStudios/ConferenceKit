@@ -829,7 +829,9 @@ struct ConversationScreen: View {
     }
 
     private var other: Attendee? {
-        otherID.flatMap { store.directoryAttendee(id: $0) ?? store.attendees.first { person in person.id == $0 } }
+        otherID.flatMap { id in
+            store.directoryAttendee(id: id) ?? store.attendees.first { person in person.id == id }
+        }
     }
 
     var body: some View {
