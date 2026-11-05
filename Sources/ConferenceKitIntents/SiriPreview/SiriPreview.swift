@@ -281,7 +281,12 @@ public struct SiriNoteEntity: IndexedEntity {
     public var sessionTitle: String
     var noteText: String
 
-    @ComputedProperty(title: "Note", description: "The text the person wrote.", indexingKey: \.contentDescription)
+    @ComputedProperty(
+        title: "Note",
+        description: "The text the person wrote.",
+        authenticationPolicy: .requiresLocalDeviceAuthentication,
+        indexingKey: \.contentDescription
+    )
     public var text: String { noteText }
 
     public var displayRepresentation: DisplayRepresentation {
@@ -476,7 +481,10 @@ public struct SessionSnippetIntent: SnippetIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ShowsSnippetView {
-        .result(view: SessionSnippetCard(title: session.title, detail: session.speakerNames))
+        .result(view: VStack(spacing: 0) {
+            SessionSnippetCard(title: session.title, detail: session.speakerNames)
+            SessionSnippetActions(session: session)
+        })
     }
 }
 

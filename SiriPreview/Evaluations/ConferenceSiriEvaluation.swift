@@ -1,6 +1,7 @@
 #if SIRI_AI_PREVIEW
 import Evaluations
 import SiriEvaluations
+import Foundation
 import Testing
 
 // Sample for a UI testing target signed by the same team as the app.
@@ -15,7 +16,15 @@ struct ConferenceSiriEvaluation: Evaluation {
     let dataset: SiriScenarioLoader
 
     func subject(from sample: SiriScenario) async throws -> SiriScenarioSubject {
-        try await SiriService.run(scenario: sample)
+        // Start and end each scenario from the same data (the DEBUG-only ResetDemoDataIntent).
+        try await resetDemoData()
+        let subject = try await SiriService.run(scenario: sample)
+        do { try await resetDemoData() } catch { Issue.record(error) }
+        return subject
+    }
+
+    private func resetDemoData() async throws {
+        try await conferenceIntents.intents["ResetDemoDataIntent"].makeIntent().run()
     }
 
     var evaluators: Evaluators {
@@ -27,7 +36,17 @@ struct ConferenceSiriEvaluation: Evaluation {
     }
 }
 
-let conferenceIntents = IntentDefinitions(bundleIdentifier: "com.example.Conference")
+private final class EvaluationBundleMarker {}
+
+/// The host app's bundle ID, from this target's Info.plist (CONFERENCE_HOST_BUNDLE_IDENTIFIER).
+let conferenceHostBundleIdentifier: String = {
+    guard let id = Bundle(for: EvaluationBundleMarker.self)
+        .object(forInfoDictionaryKey: "ConferenceHostBundleIdentifier") as? String, !id.isEmpty
+    else { fatalError("Set CONFERENCE_HOST_BUNDLE_IDENTIFIER for the evaluations target.") }
+    return id
+}()
+
+let conferenceIntents = IntentDefinitions(bundleIdentifier: conferenceHostBundleIdentifier)
 
 @Test(
     .evaluates(ConferenceSiriEvaluation(

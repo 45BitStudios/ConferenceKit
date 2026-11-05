@@ -30,7 +30,13 @@ targets:
     type: application
     supportedDestinations: [iOS, macOS, visionOS, tvOS]
     sources:
-      - ConferenceKitDemo
+      - path: ConferenceKitDemo
+        excludes:
+          - Skills.skillsbundle
+      # Siri skills (27.3 preview). Bundle layout follows the Larder sample (Artem Novichkov, MIT); not confirmed by Apple docs.
+      - path: ConferenceKitDemo/Skills.skillsbundle
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: ConferenceKit
         product: ConferenceKit
@@ -96,6 +102,28 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: studio45.conferencekit.demo.uitests
         GENERATE_INFOPLIST_FILE: "YES"
         TEST_TARGET_NAME: ConferenceKitDemo
+  # Siri Evaluations (27.3 preview). SiriEvaluations ships only in the device SDK, so this builds for
+  # generic/platform=iOS and is kept out of the main scheme's test action. Running it needs a signed
+  # device build.
+  ConferenceKitDemoSiriEvaluations:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "27.3"
+    sources:
+      - path: ../../SiriPreview/Evaluations
+    dependencies:
+      - target: ConferenceKitDemo
+    info:
+      path: ConferenceKitDemoSiriEvaluations/Info.plist
+      properties:
+        ConferenceHostBundleIdentifier: $(CONFERENCE_HOST_BUNDLE_IDENTIFIER)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: studio45.conferencekit.demo.sirievaluations
+        CONFERENCE_HOST_BUNDLE_IDENTIFIER: studio45.conferencekit.demo
+        GENERATE_INFOPLIST_FILE: "NO"
+        TEST_TARGET_NAME: ConferenceKitDemo
+        OTHER_SWIFT_FLAGS: "$(inherited) -DSIRI_AI_PREVIEW"
 schemes:
   ConferenceKitDemo:
     build:
@@ -105,3 +133,10 @@ schemes:
     test:
       targets:
         - ConferenceKitDemoUITests
+  ConferenceKitDemoSiriEvaluations:
+    build:
+      targets:
+        ConferenceKitDemoSiriEvaluations: [test]
+    test:
+      targets:
+        - ConferenceKitDemoSiriEvaluations

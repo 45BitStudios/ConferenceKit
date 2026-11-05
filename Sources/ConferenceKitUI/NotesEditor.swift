@@ -10,6 +10,8 @@ import UIKit
 struct NotesEditor: View {
     @Bindable var store: ConferenceStore
     var session: Session?
+    /// False when the editor is inline in session detail, so the detail keeps its own title.
+    var setsTitle = true
     @State private var draft = ""
     @State private var draftSessionID: String?
     @State private var showCamera = false
@@ -35,6 +37,7 @@ struct NotesEditor: View {
                     }
                     ForEach(saved) { note in
                         NoteCard(note: note, store: store)
+                            .siriEntity(.note(note.id))
                     }
                 }
                 .padding()
@@ -44,7 +47,7 @@ struct NotesEditor: View {
             #endif
             editor
         }
-        .navigationTitle("Notes")
+        .notesTitle(setsTitle)
         .onChange(of: session?.id) { _, newID in
             commitIfNeeded(previousSessionID: draftSessionID)
             draftSessionID = newID
@@ -256,3 +259,15 @@ struct SlideCamera: UIViewControllerRepresentable {
     }
 }
 #endif
+
+private extension View {
+    /// An inline editor must not set a title: SwiftUI lets the inner title win over session detail's.
+    @ViewBuilder
+    func notesTitle(_ sets: Bool) -> some View {
+        if sets {
+            navigationTitle("Notes")
+        } else {
+            self
+        }
+    }
+}
