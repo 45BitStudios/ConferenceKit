@@ -14,6 +14,8 @@ public final class ConferenceStore {
     public var selectedSessionID: String?
     public var selectedSpeakerID: String?
     public private(set) var notesStore: NotesStore?
+    public private(set) var profileStore: AttendeeProfileStore?
+    public private(set) var inbox: AttendeeInbox?
     public var searchText = ""
     public var timeDisplay: TimeDisplay = .conference
     public var reminderPreferences = ReminderPreferences.default
@@ -73,6 +75,44 @@ public final class ConferenceStore {
         (manifest?.announcements ?? []).sorted { $0.postedAt > $1.postedAt }
     }
     public var workshops: [Session] { manifest?.workshops ?? [] }
+    public var attendees: [Attendee] { manifest?.attendees ?? [] }
+
+    public func attendees(matching filter: AttendeeFilter) -> [Attendee] {
+        guard let manifest else { return [] }
+        return ConferenceSearch.attendees(in: manifest, matching: filter, profile: profileStore?.profile)
+    }
+
+    public func messagingContext(for recipientID: String) -> AttendeeMessagingContext? {
+        guard let me = profileStore?.profile else { return nil }
+        let blocked = Set(inbox?.snapshot.blockedIDs ?? [])
+        let recipient = directoryAttendee(id: recipientID)
+            ?? attendees.first { $0.id == recipientID }
+        let visibility = recipient.map(AttendeeVisibility.init)
+            ?? AttendeeVisibility(id: recipientID, discoverable: false, messagingConsent: false)
+        return AttendeeMessagingContext(
+            sender: AttendeeVisibility(me),
+            recipient: visibility,
+            blockedIDs: blocked
+        )
+    }
+
+    /// Public directory record, including this device’s profile when it is the same person.
+    public func directoryAttendee(id: String) -> Attendee? {
+        guard let manifest else { return nil }
+        return manifest.directoryAttendees(profile: profileStore?.profile).first { $0.id == id }
+    }
+
+    /// Directory record, or this device’s own profile with private contact fields removed.
+    public func visibleAttendee(id: String) -> Attendee? {
+        if let listed = directoryAttendee(id: id) { return listed }
+        guard profileStore?.profile.id == id else { return nil }
+        return profileStore?.profile.hidingPrivateContactFields()
+    }
+
+    public func updateMyProfile(_ body: (inout Attendee) -> Void) {
+        profileStore?.edit(body)
+        publishProfile()
+    }
 
     public var liveSessions: [Session] {
         ConferenceSearch.liveSessions(in: sessions)
@@ -178,6 +218,20 @@ public final class ConferenceStore {
         if notesStore?.conferenceID != loaded.conference.id {
             notesStore = NotesStore(conferenceID: loaded.conference.id, configuration: configuration)
         }
+        if profileStore?.conferenceID != loaded.conference.id {
+            let directory = configuration.attendeeDirectory(conferenceID: loaded.conference.id)
+            let profile = AttendeeProfileStore(
+                conferenceID: loaded.conference.id,
+                directory: directory,
+                seed: AttendeeProfileStore.seed(in: loaded)
+            )
+            profileStore = profile
+            let transport = LocalDemoMessageTransport(directory: directory)
+            let inbox = AttendeeInbox(transport: transport, localUserID: profile.profile.id)
+            self.inbox = inbox
+            Task { await inbox.refresh() }
+        }
+        publishProfile()
         publishSnapshot()
         let sessions = favorites.ids
         let speakers = favorites.speakerIDs
@@ -188,6 +242,12 @@ public final class ConferenceStore {
                 favoriteSpeakerIDs: speakers
             )
         }
+    }
+
+    private func publishProfile() {
+        guard let profile = profileStore?.profile else { return }
+        inbox?.localUserID = profile.id
+        Task { await ConferenceCatalog.shared.updateCurrentAttendee(profile) }
     }
 
     public func publishFavorites() {

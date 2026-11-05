@@ -460,6 +460,7 @@ enum ConferenceSiriPreviewIndex {
         let speakers = manifest.speakers.map(SpeakerEntity.init)
         try? await index.indexAppEntities(speakers)
         try? await index.indexAppEntities(speakers.map(SiriSpeakerEntity.init))
+        try? await index.indexAppEntities(manifest.directoryAttendees().map(AttendeeEntity.init))
         try? await index.indexAppEntities(manifest.tracks.map(TrackEntity.init))
         try? await index.indexAppEntities(manifest.rooms.map(RoomEntity.init))
         if let venue = manifest.conference.venue {
@@ -516,6 +517,25 @@ public struct SpeakerSnippetIntent: SnippetIntent {
     @MainActor
     public func perform() async throws -> some IntentResult & ShowsSnippetView {
         .result(view: SessionSnippetCard(title: speaker.name, detail: speaker.affiliation))
+    }
+}
+
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+public struct AttendeeSnippetIntent: SnippetIntent {
+    public static let title: LocalizedStringResource = "Attendee Card"
+
+    @Parameter(title: "Attendee")
+    public var attendee: AttendeeEntity
+
+    public init() {}
+
+    public init(attendee: AttendeeEntity) {
+        self.attendee = attendee
+    }
+
+    @MainActor
+    public func perform() async throws -> some IntentResult & ShowsSnippetView {
+        .result(view: SessionSnippetCard(title: attendee.displayName, detail: attendee.affiliation))
     }
 }
 

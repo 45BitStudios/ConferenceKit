@@ -8,6 +8,7 @@ public actor ConferenceCatalog {
     private var manifest: ConferenceManifest?
     private var storedFavoriteSessionIDs: Set<String> = []
     private var storedFavoriteSpeakerIDs: Set<String> = []
+    private var storedCurrentAttendee: Attendee?
 
     public func update(
         manifest: ConferenceManifest,
@@ -36,10 +37,19 @@ public actor ConferenceCatalog {
         storedFavoriteSpeakerIDs
     }
 
+    public func updateCurrentAttendee(_ attendee: Attendee?) {
+        storedCurrentAttendee = attendee
+    }
+
+    public func currentAttendee() -> Attendee? {
+        storedCurrentAttendee
+    }
+
     /// Test and intent helper. Production UI publishes through the store.
     public func reset() {
         manifest = nil
         storedFavoriteSessionIDs = []
         storedFavoriteSpeakerIDs = []
+        storedCurrentAttendee = nil
     }
 }

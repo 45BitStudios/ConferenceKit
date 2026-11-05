@@ -14,6 +14,9 @@ struct CompactShell: View {
                 SpeakerList(store: store, router: router, push: true)
                     .tabItem { Label(ConferenceSection.speakers.title, systemImage: ConferenceSection.speakers.systemImage) }
                     .tag(ConferenceSection.speakers)
+                AttendeeDirectory(store: store, router: router, push: true)
+                    .tabItem { Label(ConferenceSection.attendees.title, systemImage: ConferenceSection.attendees.systemImage) }
+                    .tag(ConferenceSection.attendees)
                 ScheduleList(store: store, router: router, push: true, favoritesOnly: true)
                     .tabItem { Label(ConferenceSection.favorites.title, systemImage: ConferenceSection.favorites.systemImage) }
                     .tag(ConferenceSection.favorites)
@@ -25,7 +28,7 @@ struct CompactShell: View {
                 RoutedDetail(store: store, router: router, route: route, push: true, inlineNotes: true)
             }
         }
-        .searchable(text: $store.searchText, prompt: "Sessions, speakers, notes")
+        .searchable(text: $store.searchText, prompt: "Sessions, speakers, attendees, notes")
     }
 }
 
@@ -54,12 +57,12 @@ struct RegularShell: View {
             detail
         }
         #if os(macOS)
-        .searchable(text: $store.searchText, placement: .toolbar, prompt: "Sessions, speakers, notes")
+        .searchable(text: $store.searchText, placement: .toolbar, prompt: "Sessions, speakers, attendees, notes")
         .modifier(SearchFocusRequest(request: router.searchRequest))
         .toolbar { macToolbar }
         .focusedSceneValue(\.conferenceContext, ConferenceCommandContext(store: store, router: router))
         #else
-        .searchable(text: $store.searchText, prompt: "Sessions, speakers, notes")
+        .searchable(text: $store.searchText, prompt: "Sessions, speakers, attendees, notes")
         #endif
     }
 
@@ -70,6 +73,8 @@ struct RegularShell: View {
             ScheduleList(store: store, router: router, push: false)
         case .speakers:
             SpeakerList(store: store, router: router, push: false)
+        case .attendees:
+            AttendeeDirectory(store: store, router: router, push: false)
         case .favorites:
             ScheduleList(store: store, router: router, push: false, favoritesOnly: true)
         case .workshops:
@@ -119,6 +124,8 @@ struct SplitDetail: View {
             InfoDetail(store: store, router: router, route: route, push: false)
         } else if router.section == .speakers, let id = router.selectedSpeakerID, let speaker = store.speaker(id: id) {
             SpeakerDetail(store: store, router: router, speaker: speaker, push: false)
+        } else if router.section == .attendees {
+            AttendeeColumn(store: store, router: router, push: false)
         } else if let id = router.selectedSessionID, let session = store.session(id: id) {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 0) {
@@ -168,6 +175,7 @@ struct WatchShell: View {
                     }
                 }
                 .navigationTitle("Speakers")
+                AttendeeDirectory(store: store, router: router, push: true)
             }
             .tabViewStyle(.verticalPage)
             .navigationDestination(for: ConferenceRoute.self) { route in
@@ -193,6 +201,9 @@ struct TVShell: View {
                 TVSpeakerGrid(store: store, router: router)
                     .tabItem { Label("Speakers", systemImage: "person.2") }
                     .tag(ConferenceSection.speakers)
+                TVAttendeeGrid(store: store, router: router)
+                    .tabItem { Label("Attendees", systemImage: "person.3") }
+                    .tag(ConferenceSection.attendees)
                 TVSessionGrid(store: store, router: router, favoritesOnly: true)
                     .tabItem { Label("My Schedule", systemImage: "star") }
                     .tag(ConferenceSection.favorites)
@@ -226,6 +237,16 @@ struct RoutedDetail: View {
             if let speaker = store.speaker(id: id) {
                 SpeakerDetail(store: store, router: router, speaker: speaker, push: push)
             }
+        case .attendee(let id):
+            if let attendee = store.visibleAttendee(id: id) {
+                AttendeeDetail(store: store, router: router, attendee: attendee, push: push, allowsUnlisted: store.profileStore?.profile.id == id)
+            }
+        case .myProfile:
+            MyProfileScreen(store: store, router: router)
+        case .messages:
+            ConversationList(store: store, router: router, push: push)
+        case .conversation(let id):
+            ConversationScreen(store: store, router: router, conversationID: id)
         default:
             InfoDetail(store: store, router: router, route: route, push: push)
         }

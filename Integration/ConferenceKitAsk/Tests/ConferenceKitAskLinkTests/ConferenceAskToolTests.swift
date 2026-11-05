@@ -14,6 +14,25 @@ private func catalog(favorites: Set<String> = ["layout"], now offset: TimeInterv
         conference: ConferenceInfo(id: "sg", name: "iOS Conf SG", timezone: "Asia/Singapore", startDate: "2027-01-21", endDate: "2027-01-22"),
         rooms: [Room(id: "lab", name: "Lab"), Room(id: "main", name: "Main Stage")],
         speakers: [Speaker(id: "ada", name: "Ada Example", bio: "")],
+        attendees: [
+            Attendee(
+                id: "maya",
+                displayName: "Maya Chen",
+                role: "Engineer",
+                company: "Northwind",
+                bio: "Public bio",
+                email: "maya@example.com",
+                phone: "+1-312-555-0142",
+                privacy: AttendeePrivacy(discoverable: true, showsEmail: true, showsPhone: false, showsSocial: false),
+                messagingConsent: true
+            ),
+            Attendee(
+                id: "sam",
+                displayName: "Sam Okonkwo",
+                email: "sam.secret@example.com",
+                privacy: AttendeePrivacy(discoverable: false)
+            )
+        ],
         sessions: [
             session("day-two", "Day two keynote", 24, room: "main", speakers: ["ada"]),
             session("keynote", "Opening", 0, room: "main"),
@@ -59,6 +78,15 @@ private let provider = CatalogProvider(fixed: catalog())
     #expect(notes.contains("Grids first"))
     #expect(notes.range(of: "Ship it")!.lowerBound < notes.range(of: "Grids first")!.lowerBound)
     #expect(try await NotesLookupTool(provider: provider).call(arguments: .init(day: 2)) == "No notes.")
+}
+
+@Test func attendeeToolReturnsPublicFieldsOnly() {
+    let text = AttendeeLookupTool(provider: provider).lookup(.init(name: "Maya"), catalog: catalog())
+    #expect(text.contains("maya@example.com"))
+    #expect(text.contains("Public bio"))
+    #expect(!text.contains("555-0142"))
+    #expect(!text.contains("sam.secret"))
+    #expect(AttendeeLookupTool(provider: provider).lookup(.init(name: "Sam"), catalog: catalog()).contains("No attendee"))
 }
 #endif
 

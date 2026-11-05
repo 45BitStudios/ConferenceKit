@@ -3,6 +3,7 @@ import Foundation
 public enum ConferenceLink: Hashable, Sendable {
     case session(String)
     case speaker(String)
+    case attendee(String)
     case schedule
     case favorites
     case info
@@ -35,6 +36,8 @@ public enum ConferenceLink: Hashable, Sendable {
             return base.appending(path: "session").appending(path: id)
         case .speaker(let id):
             return base.appending(path: "speaker").appending(path: id)
+        case .attendee(let id):
+            return base.appending(path: "attendee").appending(path: id)
         case .schedule:
             return base.appending(path: "schedule")
         case .favorites:
@@ -50,6 +53,8 @@ public enum ConferenceLink: Hashable, Sendable {
             return URL(string: "conferencekit://session/\(id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id)")!
         case .speaker(let id):
             return URL(string: "conferencekit://speaker/\(id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id)")!
+        case .attendee(let id):
+            return URL(string: "conferencekit://attendee/\(id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id)")!
         case .schedule:
             return URL(string: "conferencekit://schedule")!
         case .favorites:
@@ -67,6 +72,9 @@ public enum ConferenceLink: Hashable, Sendable {
         case "speaker":
             guard let id = parts.first, !id.isEmpty else { return nil }
             return .speaker(id)
+        case "attendee":
+            guard let id = parts.first, !id.isEmpty else { return nil }
+            return .attendee(id)
         case "schedule":
             return .schedule
         case "favorites":

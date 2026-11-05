@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.1",
   "conference": {
     "id": "sample-conf-2026",
     "name": "Sample Conf",
@@ -136,6 +136,71 @@
       "title": "Doors at 8:30",
       "body": "Coffee is on the first floor.",
       "postedAt": "2026-04-01T15:00:00Z"
+    }
+  ],
+  "attendees": [
+    {
+      "id": "maya-chen",
+      "displayName": "Maya Chen",
+      "role": "iOS Engineer",
+      "company": "Northwind",
+      "bio": "Ships conference apps and leaves private numbers off the directory.",
+      "email": "maya@example.com",
+      "social": [
+        { "platform": "github", "url": "https://github.com/maya-chen" }
+      ],
+      "ticket": { "kind": "full", "label": "Full conference" },
+      "privacy": {
+        "discoverable": true,
+        "showsEmail": true,
+        "showsPhone": false,
+        "showsSocial": true
+      },
+      "messagingConsent": true
+    },
+    {
+      "id": "jordan-hale",
+      "displayName": "Jordan Hale",
+      "role": "Organizer",
+      "company": "Sample Conf",
+      "bio": "Keeps the hallway track running.",
+      "ticket": { "kind": "staff", "label": "Staff" },
+      "privacy": {
+        "discoverable": true,
+        "showsEmail": false,
+        "showsPhone": false,
+        "showsSocial": false
+      },
+      "messagingConsent": false
+    },
+    {
+      "id": "sam-okonkwo",
+      "displayName": "Sam Okonkwo",
+      "role": "Attendee",
+      "company": "Lumen Lab",
+      "bio": "Asked not to be listed.",
+      "privacy": { "discoverable": false },
+      "messagingConsent": false
+    },
+    {
+      "id": "alex-rivera",
+      "displayName": "Alex Rivera",
+      "role": "Attendee",
+      "company": "Independent",
+      "bio": "Here for the labs.",
+      "email": "alex@example.com",
+      "social": [
+        { "platform": "mastodon", "url": "https://example.com/@alex" }
+      ],
+      "ticket": { "kind": "workshop", "label": "Workshop and talks" },
+      "privacy": {
+        "discoverable": true,
+        "showsEmail": true,
+        "showsPhone": false,
+        "showsSocial": true
+      },
+      "messagingConsent": true,
+      "isCurrentUser": true
     }
   ],
   "codeOfConduct": {

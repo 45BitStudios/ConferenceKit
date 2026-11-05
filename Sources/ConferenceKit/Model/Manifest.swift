@@ -17,6 +17,7 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
     public var sponsors: [Sponsor]
     public var organizers: [Organizer]
     public var announcements: [Announcement]
+    public var attendees: [Attendee]
     public var codeOfConduct: CodeOfConduct?
     public var wifi: WiFiInfo?
 
@@ -31,6 +32,7 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
         sponsors: [Sponsor] = [],
         organizers: [Organizer] = [],
         announcements: [Announcement] = [],
+        attendees: [Attendee] = [],
         codeOfConduct: CodeOfConduct? = nil,
         wifi: WiFiInfo? = nil
     ) {
@@ -44,6 +46,7 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
         self.sponsors = sponsors
         self.organizers = organizers
         self.announcements = announcements
+        self.attendees = attendees
         self.codeOfConduct = codeOfConduct
         self.wifi = wifi
     }
@@ -131,6 +134,12 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
             issues.append(ManifestIssue(message: "Conference end date “\(conference.endDate)” is not yyyy-MM-dd."))
         }
         var sessionIDs = Set<String>()
+        var attendeeIDs = Set<String>()
+        for attendee in attendees {
+            if !attendeeIDs.insert(attendee.id).inserted {
+                issues.append(ManifestIssue(message: "Duplicate attendee id “\(attendee.id)”."))
+            }
+        }
         for session in sessions {
             if !sessionIDs.insert(session.id).inserted {
                 issues.append(ManifestIssue(message: "Duplicate session id “\(session.id)”."))
@@ -153,7 +162,7 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, conference, theme, tracks, rooms, speakers, sessions
-        case sponsors, organizers, announcements, codeOfConduct, wifi
+        case sponsors, organizers, announcements, attendees, codeOfConduct, wifi
     }
 
     public init(from decoder: Decoder) throws {
@@ -168,6 +177,7 @@ public struct ConferenceManifest: Codable, Hashable, Sendable {
         sponsors = try container.decodeIfPresent([Sponsor].self, forKey: .sponsors) ?? []
         organizers = try container.decodeIfPresent([Organizer].self, forKey: .organizers) ?? []
         announcements = try container.decodeIfPresent([Announcement].self, forKey: .announcements) ?? []
+        attendees = try container.decodeIfPresent([Attendee].self, forKey: .attendees) ?? []
         codeOfConduct = try container.decodeIfPresent(CodeOfConduct.self, forKey: .codeOfConduct)
         wifi = try container.decodeIfPresent(WiFiInfo.self, forKey: .wifi)
     }
