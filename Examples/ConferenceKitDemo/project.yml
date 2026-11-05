@@ -1,4 +1,4 @@
-# One multiplatform host (iOS, macOS, visionOS, tvOS; watchOS can't share an app target) for ConferenceKit. Generate with `xcodegen generate` in this folder.
+# One multiplatform host (iOS, macOS, visionOS, tvOS) plus a small standalone watchOS host (watchOS can't share an app target) for ConferenceKit. Generate with `xcodegen generate` in this folder.
 # The project file is not committed; project.yml is the source of truth.
 # AskKitUI is left out on purpose: its VoiceGlowKit shaders need the Metal Toolchain component.
 name: ConferenceKitDemo
@@ -9,6 +9,7 @@ options:
     visionOS: "27.0"
     macOS: "27.0"
     tvOS: "27.0"
+    watchOS: "27.0"
   createIntermediateGroups: true
 settings:
   base:
@@ -64,6 +65,25 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: studio45.conferencekit.demo
         GENERATE_INFOPLIST_FILE: "NO"
         TARGETED_DEVICE_FAMILY: "1,2,3,7"
+  ConferenceKitDemoWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - ConferenceKitDemoWatch
+      - path: ConferenceKitDemo/DemoSchedule.swift
+    dependencies:
+      - package: ConferenceKit
+        product: ConferenceKit
+      - package: ConferenceKit
+        product: ConferenceKitUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: studio45.conferencekit.demo.watchkitapp
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: ConferenceKit
+        INFOPLIST_KEY_WKWatchOnly: "YES"
+        INFOPLIST_KEY_WKApplication: "YES"
+        TARGETED_DEVICE_FAMILY: "4"
   ConferenceKitDemoUITests:
     type: bundle.ui-testing
     supportedDestinations: [iOS, visionOS]

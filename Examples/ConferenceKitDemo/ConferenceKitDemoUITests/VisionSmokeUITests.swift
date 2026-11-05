@@ -1,7 +1,8 @@
 #if os(visionOS)
 import XCTest
 
-/// visionOS smoke pass: schedule, session detail, notes, settings, and Ask.
+/// visionOS smoke pass: tab-bar ornament, session detail + bottom actions ornament,
+/// notes window, settings, and Ask.
 /// Screenshots go to `CK_SHOTS`/visionos (default /tmp/ck273/shots/visionos).
 @MainActor
 final class VisionSmokeUITests: XCTestCase {
@@ -36,13 +37,26 @@ final class VisionSmokeUITests: XCTestCase {
         app.launch()
         sleep(4)
         log("division=\(app.staticTexts["demo.division"].label) cells=\(app.cells.count) buttons=\(app.buttons.count)")
+        log("tabs schedule=\(app.buttons["Schedule"].exists) speakers=\(app.buttons["Speakers"].exists) mySchedule=\(app.buttons["My Schedule"].exists) info=\(app.buttons["Info"].exists)")
+        XCTAssertTrue(app.buttons["Info"].exists, "Info tab in the tab bar ornament")
         shot("40_schedule")
         let session = app.staticTexts["App Intents that actually ship"].firstMatch
         if session.waitForExistence(timeout: 5) {
             log("open session: \(session.label)")
             session.tap(); sleep(3)
         } else { log("session row missing") }
+        // Favorites persist across runs, so the toggle may already read "Remove".
+        let unsave = app.buttons["Remove from My Schedule"].firstMatch
+        if unsave.exists { log("already saved; un-saving first"); unsave.tap(); sleep(2) }
+        let save = app.buttons["Add to My Schedule"].firstMatch
+        let remind = app.buttons["Remind"].firstMatch
+        let calendar = app.buttons["Calendar"].firstMatch
+        let notesButton = app.buttons["Notes"].firstMatch
+        log("ornament save=\(save.exists) remind=\(remind.exists) calendar=\(calendar.exists) notes=\(notesButton.exists)")
+        XCTAssertTrue(save.exists && remind.exists && calendar.exists, "session actions ornament")
         shot("41_session_detail")
+        if save.exists { save.tap(); sleep(2); log("after save: saved=\(app.buttons["Remove from My Schedule"].exists)") }
+        shot("41b_session_saved")
         let note = app.textViews.firstMatch
         log("textViews=\(app.textViews.count) sessionNote=\(note.exists) timestamp=\(app.buttons["Timestamp"].exists) camera=\(app.buttons["Camera"].exists)")
         if note.exists {
@@ -67,6 +81,13 @@ final class VisionSmokeUITests: XCTestCase {
         }
         log("settings: leadTime=\(app.staticTexts["Lead time"].exists) reminders=\(app.switches["Reminders for favorites"].exists) companion=\(app.switches["Outer display companion"].exists) alarms=\(app.switches.matching(NSPredicate(format: "label BEGINSWITH 'Alarms'")).count)")
         shot("43_settings")
+        // Last: the Notes ornament button opens a separate notes window.
+        app.buttons["Schedule"].firstMatch.tap(); sleep(2)
+        if session.exists { session.tap(); sleep(3) }
+        if notesButton.waitForExistence(timeout: 3) {
+            notesButton.tap(); sleep(4); log("opened notes window windows=\(app.windows.count)")
+            shot("42b_notes_window")
+        } else { log("notes ornament button missing") }
     }
 
     func test2_Ask() throws {

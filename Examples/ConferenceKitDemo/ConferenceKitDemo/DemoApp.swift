@@ -25,10 +25,19 @@ struct ConferenceKitDemoApp: App {
         WindowGroup {
             DemoLoader(fallback: store)
         }
+        #if os(macOS)
+        .commands { ConferenceCommands() }
+        #endif
         #if os(iOS) || os(macOS) || os(visionOS)
         // Detail windows; ConferenceKitUI doesn't ship them on tvOS.
         ConferenceSessionScene(store: store)
         ConferenceSpeakerScene(store: store)
+        #endif
+        #if os(macOS) || os(visionOS)
+        ConferenceNotesScene(store: store)
+        #endif
+        #if os(macOS)
+        ConferenceSettingsScene(store: store)
         #endif
     }
 }
@@ -90,6 +99,9 @@ struct DemoRoot: View {
             }
             .sheet(isPresented: $showsAsk) { AskDemoView(store: store) }
             .sheet(isPresented: $showsDiagnostics) { DiagnosticsView(store: store) }
+            #if os(macOS)
+            .task { await MacWindowSnapshot.runIfRequested() }
+            #endif
     }
 
     static func describe(_ proxy: GeometryProxy) -> String {
@@ -111,3 +123,24 @@ struct DemoRoot: View {
         return text
     }
 }
+
+#if os(macOS)
+import AppKit
+
+/// Test hook: `CK_MAC_SNAPSHOT=/path.png` resizes the main window and writes a PNG of it
+/// (toolbar included). Used for docs screenshots when screen recording isn't granted.
+@MainActor
+enum MacWindowSnapshot {
+    static func runIfRequested() async {
+        guard let path = ProcessInfo.processInfo.environment["CK_MAC_SNAPSHOT"] else { return }
+        try? await Task.sleep(for: .seconds(2))
+        guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) else { return }
+        window.setFrame(NSRect(x: 80, y: 80, width: 1280, height: 800), display: true)
+        try? await Task.sleep(for: .seconds(2))
+        guard let view = window.contentView?.superview ?? window.contentView,
+              let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+    }
+}
+#endif

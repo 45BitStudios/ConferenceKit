@@ -39,7 +39,9 @@ struct NotesEditor: View {
                 }
                 .padding()
             }
+            #if !os(tvOS)
             quickActions
+            #endif
             editor
         }
         .navigationTitle("Notes")

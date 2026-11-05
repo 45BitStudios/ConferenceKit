@@ -49,7 +49,7 @@ struct InfoMenu: View {
     var push: Bool
 
     var body: some View {
-        List(InfoRoute.allCases) { item in
+        List(items) { item in
             Button {
                 router.open(item.route, push: push)
             } label: {
@@ -59,6 +59,14 @@ struct InfoMenu: View {
             .buttonStyle(.plain)
         }
         .navigationTitle("Info")
+    }
+
+    private var items: [InfoRoute] {
+        #if os(macOS)
+        // macOS: settings live in the app's Settings scene (⌘,) when the host registers it.
+        if ConferenceWindowRegistration.settings { return InfoRoute.allCases.filter { $0 != .settings } }
+        #endif
+        return InfoRoute.allCases
     }
 }
 
