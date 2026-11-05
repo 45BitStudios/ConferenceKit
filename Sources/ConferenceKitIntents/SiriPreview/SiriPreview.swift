@@ -25,7 +25,8 @@ import SwiftUI
 public struct WhatsNextTool: AppIntent {
     public static let title: LocalizedStringResource = "What's Next"
     public static let description = IntentDescription(
-        LocalizedStringResource("Reports the session that is on now, or the next one if nothing is live.")
+        LocalizedStringResource("Reports the session that is on now, or the next one if nothing is live."),
+        searchKeywords: [LocalizedStringResource("what's on"), LocalizedStringResource("happening now"), LocalizedStringResource("up next")]
     )
 
     @Parameter(title: "Favorites Only", description: LocalizedStringResource("Limit the answer to sessions the person saved."), default: false)
@@ -55,7 +56,8 @@ public struct WhatsNextTool: AppIntent {
 public struct FindSessionTool: AppIntent {
     public static let title: LocalizedStringResource = "Find Session"
     public static let description = IntentDescription(
-        LocalizedStringResource("Finds sessions by title, speaker, room, or track.")
+        LocalizedStringResource("Finds sessions by title, speaker, room, or track."),
+        searchKeywords: [LocalizedStringResource("talk"), LocalizedStringResource("session"), LocalizedStringResource("who is speaking")]
     )
 
     @Parameter(title: "Query", description: LocalizedStringResource("Words from the session, the speaker, or the room."))
@@ -86,7 +88,8 @@ public struct FindSessionTool: AppIntent {
 public struct FavoriteSessionTool: AppIntent {
     public static let title: LocalizedStringResource = "Favorite Session"
     public static let description = IntentDescription(
-        LocalizedStringResource("Saves a session on My Schedule, or removes it.")
+        LocalizedStringResource("Saves a session on My Schedule, or removes it."),
+        searchKeywords: [LocalizedStringResource("favorite"), LocalizedStringResource("save"), LocalizedStringResource("my schedule")]
     )
 
     @Parameter(title: "Session", description: LocalizedStringResource("The session to save or remove."))
@@ -99,6 +102,12 @@ public struct FavoriteSessionTool: AppIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ProvidesDialog {
+        try await requestConfirmation(
+            actionName: favorite ? .add : .set,
+            dialog: IntentDialog(stringLiteral: favorite
+                ? "Save \(session.title) on My Schedule?"
+                : "Remove \(session.title) from My Schedule?")
+        )
         let message = await FavoriteMutator.setSession(id: session.id, favorite: favorite)
         return .result(dialog: IntentDialog(stringLiteral: message))
     }
@@ -109,7 +118,8 @@ public struct FavoriteSessionTool: AppIntent {
 public struct AddNoteTool: AppIntent {
     public static let title: LocalizedStringResource = "Add Note"
     public static let description = IntentDescription(
-        LocalizedStringResource("Adds a note to the session on screen, or to the session that is live.")
+        LocalizedStringResource("Adds a note to the session on screen, or to the session that is live."),
+        searchKeywords: [LocalizedStringResource("note"), LocalizedStringResource("jot down")]
     )
 
     @Parameter(title: "Note", description: LocalizedStringResource("The sentence to save."))
@@ -133,7 +143,8 @@ public struct AddNoteTool: AppIntent {
 public struct ShowNotesTool: AppIntent {
     public static let title: LocalizedStringResource = "Show Notes"
     public static let description = IntentDescription(
-        LocalizedStringResource("Shows the notes saved for one session.")
+        LocalizedStringResource("Shows the notes saved for one session."),
+        searchKeywords: [LocalizedStringResource("my notes"), LocalizedStringResource("what did I write")]
     )
 
     @Parameter(title: "Session", description: LocalizedStringResource("The session whose notes to read."))
@@ -153,7 +164,8 @@ public struct ShowNotesTool: AppIntent {
 public struct ExportNotesTool: AppIntent {
     public static let title: LocalizedStringResource = "Export Notes"
     public static let description = IntentDescription(
-        LocalizedStringResource("Exports every note as Markdown, grouped by day and session.")
+        LocalizedStringResource("Exports every note as Markdown, grouped by day and session."),
+        searchKeywords: [LocalizedStringResource("export notes"), LocalizedStringResource("share notes")]
     )
 
     public init() {}
@@ -281,7 +293,12 @@ public struct SiriNoteEntity: IndexedEntity {
     public var sessionTitle: String
     var noteText: String
 
-    @ComputedProperty(title: "Note", description: "The text the person wrote.", indexingKey: \.contentDescription)
+    @ComputedProperty(
+        title: "Note",
+        description: "The text the person wrote.",
+        authenticationPolicy: .requiresLocalDeviceAuthentication,
+        indexingKey: \.contentDescription
+    )
     public var text: String { noteText }
 
     public var displayRepresentation: DisplayRepresentation {
@@ -476,7 +493,10 @@ public struct SessionSnippetIntent: SnippetIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ShowsSnippetView {
-        .result(view: SessionSnippetCard(title: session.title, detail: session.speakerNames))
+        .result(view: VStack(spacing: 0) {
+            SessionSnippetCard(title: session.title, detail: session.speakerNames)
+            SessionSnippetActions(session: session)
+        })
     }
 }
 

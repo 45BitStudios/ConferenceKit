@@ -142,13 +142,17 @@ struct SessionDetail: View {
                 if showsInlineNotes {
                     Text("Notes")
                         .font(.title2.weight(.semibold))
-                    NotesEditor(store: store, session: session)
+                    NotesEditor(store: store, session: session, setsTitle: false)
                         .frame(minHeight: 280)
                 }
             }
             .padding()
         }
+        #if os(visionOS)
+        .navigationTitle(session.title)
+        #else
         .navigationTitle(session.kind.label)
+        #endif
         .toolbar { toolbar }
         #if os(visionOS)
         .ornament(attachmentAnchor: .scene(.bottom)) {

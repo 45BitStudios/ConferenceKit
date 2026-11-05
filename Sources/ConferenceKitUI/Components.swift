@@ -7,6 +7,10 @@ struct SessionRow: View {
     var emphasized = false
 
     var body: some View {
+        rowContent.siriEntity(.session(session.id))
+    }
+
+    private var rowContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(store.clock.timeString(session.startTime, style: store.timeDisplay))

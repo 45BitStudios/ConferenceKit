@@ -39,6 +39,7 @@ struct SpeakerList: View {
                 }
             }
             .buttonStyle(.plain)
+            .siriEntity(.speaker(speaker.id))
         }
         .navigationTitle("Speakers")
     }
@@ -304,6 +305,7 @@ struct NotesSearchScreen: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+                .siriEntity(.note(note.id))
             }
         }
         .searchable(text: $query, prompt: "Search notes")
