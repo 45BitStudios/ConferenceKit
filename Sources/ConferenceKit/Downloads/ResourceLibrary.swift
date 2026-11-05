@@ -6,7 +6,7 @@ import Observation
 @MainActor
 @Observable
 public final class ResourceLibrary {
-    public private(set) var records: [String: ResourceDownloadRecord] = []
+    public private(set) var records: [String: ResourceDownloadRecord] = [:]
     public let directory: URL
 
     @ObservationIgnored private var generation: [String: Int] = [:]

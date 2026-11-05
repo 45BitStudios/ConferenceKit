@@ -165,9 +165,9 @@ public enum ResourceTransfer {
 
     public static func categoryLabel(_ category: String) -> String {
         switch category.lowercased() {
-        case "slides": "Slides"
-        case "map": "Map"
-        case "sponsor": "Sponsor"
+        case "slides": return "Slides"
+        case "map": return "Map"
+        case "sponsor": return "Sponsor"
         default:
             guard let first = category.first else { return "Other" }
             return first.uppercased() + category.dropFirst()
