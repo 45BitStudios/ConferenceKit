@@ -30,6 +30,11 @@ let package = Package(
             swiftSettings: [
                 .define("CONFERENCEKIT_ASK")
             ]
+        ),
+        .testTarget(
+            name: "ConferenceKitAskLinkTests",
+            dependencies: ["ConferenceKitAskLink"],
+            path: "Tests/ConferenceKitAskLinkTests"
         )
     ]
 )
