@@ -74,6 +74,9 @@ public struct Attendee: Codable, Hashable, Identifiable, Sendable {
     }
 
     /// Directory search. Hidden attendees never match. Contact fields match only when marked public.
+    ///
+    /// Matching folds case, width, and diacritics in the POSIX locale. It does not use
+    /// `localizedStandardContains`, whose Finder rules change between OS versions.
     public func matchesDirectoryQuery(_ query: String) -> Bool {
         guard privacy.discoverable else { return false }
         let visible = hidingPrivateContactFields()
@@ -87,9 +90,10 @@ public struct Attendee: Codable, Hashable, Identifiable, Sendable {
             visible.ticket?.label,
             visible.ticket?.kind
         ]
-        if fields.contains(where: { $0?.localizedStandardContains(query) == true }) { return true }
+        if fields.contains(where: { $0.map { DirectoryText.contains($0, query: query) } == true }) { return true }
         return visible.social.contains {
-            $0.platform.label.localizedStandardContains(query) || $0.url.absoluteString.localizedStandardContains(query)
+            DirectoryText.contains($0.platform.label, query: query)
+                || DirectoryText.contains($0.url.absoluteString, query: query)
         }
     }
 
@@ -193,7 +197,32 @@ extension ConferenceManifest {
         return records
             .filter(\.privacy.discoverable)
             .map { $0.hidingPrivateContactFields() }
-            .sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
+            .sorted { DirectoryText.isOrderedBefore($0.displayName, $0.id, $1.displayName, $1.id) }
+    }
+}
+
+/// Case- and diacritic-insensitive directory text, pinned to the POSIX locale.
+enum DirectoryText {
+    static let locale = Locale(identifier: "en_US_POSIX")
+
+    static func fold(_ value: String) -> String {
+        value.folding(
+            options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive],
+            locale: locale
+        )
+    }
+
+    static func contains(_ field: String, query: String) -> Bool {
+        let needle = fold(query)
+        guard !needle.isEmpty else { return true }
+        return fold(field).contains(needle)
+    }
+
+    static func isOrderedBefore(_ lhsName: String, _ lhsID: String, _ rhsName: String, _ rhsID: String) -> Bool {
+        let order = fold(lhsName).compare(fold(rhsName), locale: locale)
+        if order == .orderedAscending { return true }
+        if order == .orderedDescending { return false }
+        return lhsID.compare(rhsID, locale: locale) == .orderedAscending
     }
 }
 

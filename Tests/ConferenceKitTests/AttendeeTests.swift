@@ -121,11 +121,6 @@ import Contacts
 
 @Test func attendeeQueriesMapPublicDirectoryOnly() async throws {
     let manifest = try await ConferenceLoader().load(.sample)
-    await ConferenceCatalog.shared.update(manifest: manifest, favoriteSessionIDs: [], favoriteSpeakerIDs: [])
-    await ConferenceCatalog.shared.updateCurrentAttendee(nil)
-    let query = AttendeeEntityQuery()
-    let byID = try await query.entities(for: ["maya-chen", "sam-okonkwo"])
-    #expect(byID.map(\.id) == ["maya-chen"])
     let mayaContact = AttendeeContactDisclosure.make(attendeeID: "maya-chen", in: manifest)
     #expect(mayaContact?.email == "maya@example.com")
     #expect(mayaContact?.phone == nil)
@@ -134,14 +129,22 @@ import Contacts
     #expect(jordanContact?.email == nil)
     #expect(jordanContact?.phone == nil)
     #expect(jordanContact?.spoken.contains("no public contact fields") == true)
-    let jordan = try await query.entities(matching: "Jordan")
-    #expect(jordan.map(\.id) == ["jordan-hale"])
-    #expect(try await query.entities(matching: "sam.secret").isEmpty)
-    let suggested = try await query.suggestedEntities()
-    #expect(suggested.map(\.id).sorted() == ["alex-rivera", "jordan-hale", "maya-chen"])
     let info = manifest.conference
     #expect(ConferenceLink.parse(ConferenceLink.attendee("maya-chen").url(conference: info)) == .attendee("maya-chen"))
-    await ConferenceCatalog.shared.reset()
+    // The entity query reads the process-wide catalog. Other tests replace it.
+    try await CatalogGate.shared.run {
+        await ConferenceCatalog.shared.update(manifest: manifest, favoriteSessionIDs: [], favoriteSpeakerIDs: [])
+        await ConferenceCatalog.shared.updateCurrentAttendee(nil)
+        let query = AttendeeEntityQuery()
+        let byID = try await query.entities(for: ["maya-chen", "sam-okonkwo"])
+        #expect(byID.map(\.id) == ["maya-chen"])
+        let jordan = try await query.entities(matching: "Jordan")
+        #expect(jordan.map(\.id) == ["jordan-hale"])
+        #expect(try await query.entities(matching: "sam.secret").isEmpty)
+        let suggested = try await query.suggestedEntities()
+        #expect(posixSorted(suggested.map(\.id)) == ["alex-rivera", "jordan-hale", "maya-chen"])
+        await ConferenceCatalog.shared.reset()
+    }
 }
 
 @Test @MainActor func appShortcutsStayWithinTheCap() {
@@ -257,3 +260,44 @@ import Contacts
     #expect(privateCard.urlAddresses.isEmpty)
 }
 #endif
+
+/// Other tests also publish `ConferenceCatalog.shared`. Hold this across a publish and the queries that read it.
+actor CatalogGate {
+    static let shared = CatalogGate()
+    private var busy = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func run<T: Sendable>(_ body: @Sendable () async throws -> T) async throws -> T {
+        await acquire()
+        do {
+            let value = try await body()
+            release()
+            return value
+        } catch {
+            release()
+            throw error
+        }
+    }
+
+    private func acquire() async {
+        if !busy {
+            busy = true
+            return
+        }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    private func release() {
+        if let next = waiters.first {
+            waiters.removeFirst()
+            next.resume()
+        } else {
+            busy = false
+        }
+    }
+}
+
+func posixSorted(_ ids: [String]) -> [String] {
+    let locale = Locale(identifier: "en_US_POSIX")
+    return ids.sorted { $0.compare($1, locale: locale) == .orderedAscending }
+}

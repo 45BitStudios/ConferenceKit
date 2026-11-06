@@ -61,8 +61,8 @@ public enum ConferenceAsk {
             domains: [
                 AskDomain(
                     id: "schedule",
-                    summary: "Conference schedule, rooms, speakers, favorites, and notes",
-                    routingNotes: "Sessions, speakers, rooms, what is on now, saved talks, and the person’s notes."
+                    summary: "Conference schedule, rooms, speakers, attendees, favorites, and notes",
+                    routingNotes: "Sessions, speakers, the attendee directory, rooms, what is on now, saved talks, and the person’s notes."
                 )
             ],
             skills: skills,
@@ -84,7 +84,8 @@ public enum ConferenceAsk {
                 [
                     AskChip(id: "next", skillID: ConferenceAskKind.whatsNext.skillID, title: "What’s next?"),
                     AskChip(id: "notes", skillID: ConferenceAskKind.summarizeNotes.skillID, title: "My notes"),
-                    AskChip(id: "saved", skillID: ConferenceAskKind.favorites.skillID, title: "My schedule")
+                    AskChip(id: "saved", skillID: ConferenceAskKind.favorites.skillID, title: "My schedule"),
+                    AskChip(id: "attendees", skillID: ConferenceAskKind.findAttendee.skillID, title: "Who's here")
                 ]
             },
             fastPath: { utterance in
@@ -102,15 +103,29 @@ public enum ConferenceAsk {
         ))
     }
 
+    /// Every routed kind has an Ask skill. `findAttendee` is the on-device directory
+    /// answer. It is not the Siri custom attendee tool.
     private static func skills(source: ConferenceAskSource) -> [AskSkill] {
-        [
-            skill(source, kind: .whenSpeaking, title: "When someone is speaking", summary: "Sessions for a speaker", slots: ["speaker"], notes: "When is a person speaking, and which talk."),
-            skill(source, kind: .nextInRoom, title: "Next in a room", summary: "What is on now or next in one room", slots: ["room"], notes: "What’s next in a room, lab, or stage."),
-            skill(source, kind: .whatsNext, title: "What’s next", summary: "The live session or the next one", notes: "What’s next, what’s on now, with no room named."),
-            skill(source, kind: .summarizeNotes, title: "Summarize notes", summary: "The person’s notes for a conference day", slots: ["day"], notes: "Summarize notes, notes from day 1, notes today."),
-            skill(source, kind: .dayAgenda, title: "A day's agenda", summary: "Every session on one conference day, in time order", slots: ["day"], notes: "What's on day 2, the day one schedule."),
-            skill(source, kind: .favorites, title: "Saved sessions", summary: "The person’s favorites", notes: "My schedule, favorites, saved talks.")
-        ]
+        ConferenceAskKind.allCases.compactMap { kind in
+            switch kind {
+            case .unknown:
+                return nil
+            case .whenSpeaking:
+                return skill(source, kind: kind, title: "When someone is speaking", summary: "Sessions for a speaker", slots: ["speaker"], notes: "When is a person speaking, and which talk.")
+            case .nextInRoom:
+                return skill(source, kind: kind, title: "Next in a room", summary: "What is on now or next in one room", slots: ["room"], notes: "What’s next in a room, lab, or stage.")
+            case .whatsNext:
+                return skill(source, kind: kind, title: "What’s next", summary: "The live session or the next one", notes: "What’s next, what’s on now, with no room named.")
+            case .summarizeNotes:
+                return skill(source, kind: kind, title: "Summarize notes", summary: "The person’s notes for a conference day", slots: ["day"], notes: "Summarize notes, notes from day 1, notes today.")
+            case .dayAgenda:
+                return skill(source, kind: kind, title: "A day's agenda", summary: "Every session on one conference day, in time order", slots: ["day"], notes: "What's on day 2, the day one schedule.")
+            case .favorites:
+                return skill(source, kind: kind, title: "Saved sessions", summary: "The person’s favorites", notes: "My schedule, favorites, saved talks.")
+            case .findAttendee:
+                return skill(source, kind: kind, title: "Attendee directory", summary: "People who opted into the directory", notes: "Who is attending, or a name in the directory. Say only the public fields in the answer. Do not invent an email or a phone. This is not a delivered message.")
+            }
+        }
     }
 
     private static func skill(

@@ -188,11 +188,11 @@ What that flag turns on:
 - A generable `SessionQueryEntity` (`@AppEntity(.generable)`) so a search can be filled from the request.
 - Branded snippet cards for a session or a speaker. The snippet result API is the part not shown as a full sample in the preview article.
 - A Live Activity and an `NSUserActivity` while a session is on screen, so “add a note: …” can use the foreground session without the app name.
-- App skills to copy into the host’s `Skills.skillsbundle`: `SiriPreview/Skills/plan-afternoon/SKILL.md`, `SiriPreview/Skills/recall-notes/SKILL.md`, and `SiriPreview/Skills/find-attendee/SKILL.md`. One bundle per app target, name matching the folder, `name` and `description` only.
+- App skills. The canonical files are `SiriPreview/Skills`: `plan-afternoon`, `write-notes`, `recall-notes`, `export-notes`, and `find-attendee`. The demo app copies that same set into `ConferenceKitDemo/Skills.skillsbundle` and marks the folder as a resource. One bundle per app target. Each folder name matches the `name` field. Front matter is `name` and `description` only. The watch target does not include the bundle. A package test checks the copy and the front matter. It does not prove Siri discovered the skills.
 - A Siri Evaluations sample at `SiriPreview/Evaluations/ConferenceSiriEvaluation.swift`. It is not in the package test target. Add it to a UI testing target signed by the same team, with the flag set. `SiriService.run(scenario:)` is from the Siri Evaluations docs.
 
 ## Tests
 
-`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, attendee privacy, vCard escaping, the demo message transport, and the Ask answers.
+`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, attendee privacy, vCard escaping, the demo message transport, the Ask answers, and the Siri skill bundle’s front matter and demo-copy parity. The skill test does not prove Siri indexed the bundle.
 
 Xcode 27.2 already built the previous head (880385a) for iOS, iOS Simulator, macOS, watchOS, tvOS, and visionOS, and `swift test` passed. This follow-up was not compiled here. The matrix in `docs/FeatureMatrix.md` is the list of what is implemented versus deliberately left out.

@@ -44,13 +44,15 @@ import CoreSpotlight
 
 @Test @MainActor func searchAttendeesPerformAndContactAuthStaySeparate() async throws {
     let manifest = try await ConferenceLoader().load(.sample)
-    await ConferenceCatalog.shared.update(manifest: manifest, favoriteSessionIDs: [], favoriteSpeakerIDs: [])
-    await ConferenceCatalog.shared.updateCurrentAttendee(nil)
-    _ = try await SearchAttendeesIntent(query: "Okonkwo").perform()
+    try await CatalogGate.shared.run {
+        await ConferenceCatalog.shared.update(manifest: manifest, favoriteSessionIDs: [], favoriteSpeakerIDs: [])
+        await ConferenceCatalog.shared.updateCurrentAttendee(nil)
+        _ = try await SearchAttendeesIntent(query: "Okonkwo").perform()
+        await ConferenceCatalog.shared.reset()
+    }
     #expect(SearchAttendeesIntent.authenticationPolicy == .alwaysAllowed)
     #expect(OpenAttendeeIntent.authenticationPolicy == .alwaysAllowed)
     #expect(ReadPublicAttendeeContactIntent.authenticationPolicy == .requiresLocalDeviceAuthentication)
-    await ConferenceCatalog.shared.reset()
 }
 
 @Test @MainActor func profileEditRevalidatesPublicContactAndConsent() async throws {
