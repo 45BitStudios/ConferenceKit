@@ -72,4 +72,31 @@ func whatsNextThenNote() async throws {
     let result = EvaluationContext.current.result
     #expect(result.aggregateValue(.mean(of: .intentsAllPass)) == 1)
 }
+
+// Not executed by `swift test`. The package test target does not compile this file.
+// A signed evaluations target on 27.3 can run it. It is not a device QA pass and not an Instruments trace.
+@Test(
+    .evaluates(ConferenceSiriEvaluation(
+        name: "Attendee directory",
+        dataset: SiriScenarioLoader {
+            SiriScenario {
+                UserTurn("Who is attending?") {
+                    Calls {
+                        conferenceIntents.intents["FindAttendeeTool"]
+                    }
+                }
+                UserTurn("Is Okonkwo in the directory?") {
+                    Calls {
+                        conferenceIntents.intents["FindAttendeeTool"]
+                    }
+                    SiriResponse(.contains("directory"))
+                }
+            }
+        }
+    ))
+)
+func attendeeDirectoryLookup() async throws {
+    let result = EvaluationContext.current.result
+    #expect(result.aggregateValue(.mean(of: .intentsAllPass)) == 1)
+}
 #endif

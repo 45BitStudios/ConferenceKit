@@ -179,6 +179,8 @@ The preview is iOS 27.3, iPadOS 27.3, macOS 27.3, and visionOS 27.3. It is not o
 
 Enable it with Xcode 27.3 by adding `swiftSettings: [.define("SIRI_AI_PREVIEW")]` to the `ConferenceKitIntents` and `ConferenceKitUI` targets in `Package.swift`, then build a development-signed app. The preview works for development-signed builds and internal TestFlight testers. It does not work for external TestFlight testers or the App Store, and the API can still change.
 
+Custom Siri tools and the on-device directory are different paths. `@AppIntent(.tool)` is compiled only with the flag, on iOS, macOS, and visionOS. The group lab described those tools as running through Siri’s Private Cloud Compute, so they are not an offline feature. Search Attendees and the Ask rules run on device without that connection. Watch has no custom ToolIntent in this package, and nothing here relays a watch request to the iPhone. `docs/IntelligenceLabCoverage.md` separates what the code does, what the labs said, and what still needs a device.
+
 What that flag turns on:
 
 - `@AppIntent(.tool)` tools for what’s next, find session, favorite, add note, show notes, and export notes. Titles and parameter descriptions are written for the model.
