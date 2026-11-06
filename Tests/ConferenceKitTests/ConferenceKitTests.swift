@@ -188,19 +188,21 @@ import Testing
 
 @Test func entityQueriesResolveAndOmitMissingIDs() async throws {
     let manifest = try await ConferenceLoader().load(.sample)
-    await ConferenceCatalog.shared.update(manifest: manifest, favoriteSessionIDs: ["opening-keynote"], favoriteSpeakerIDs: [])
-    let sessions = SessionEntityQuery()
-    let found = try await sessions.entities(matching: "Keynote")
-    #expect(found.map(\.id) == ["opening-keynote"])
-    let byID = try await sessions.entities(for: ["opening-keynote", "missing"])
-    #expect(byID.map(\.id) == ["opening-keynote"])
-    let speakers = try await SpeakerEntityQuery().entities(matching: "Ada")
-    #expect(speakers.map(\.id) == ["guest-speaker"])
-    let venue = try await VenueEntityQuery().suggestedEntities()
-    #expect(venue.first?.name == "Navy Pier")
-    let days = try await DayEntityQuery().suggestedEntities()
-    #expect(days.count == 2)
-    await ConferenceCatalog.shared.reset()
+    try await CatalogGate.shared.run {
+        await ConferenceCatalog.shared.update(manifest: manifest, favoriteSessionIDs: ["opening-keynote"], favoriteSpeakerIDs: [])
+        let sessions = SessionEntityQuery()
+        let found = try await sessions.entities(matching: "Keynote")
+        #expect(found.map(\.id) == ["opening-keynote"])
+        let byID = try await sessions.entities(for: ["opening-keynote", "missing"])
+        #expect(byID.map(\.id) == ["opening-keynote"])
+        let speakers = try await SpeakerEntityQuery().entities(matching: "Ada")
+        #expect(speakers.map(\.id) == ["guest-speaker"])
+        let venue = try await VenueEntityQuery().suggestedEntities()
+        #expect(venue.first?.name == "Navy Pier")
+        let days = try await DayEntityQuery().suggestedEntities()
+        #expect(days.count == 2)
+        await ConferenceCatalog.shared.reset()
+    }
 }
 
 @Test func alarmKitAndFollowLiveStayOffUntilChosen() {
