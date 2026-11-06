@@ -21,7 +21,7 @@ Consent is the attendee’s privacy flags and `messagingConsent`. Visibility, wh
 - Opted-out people are absent from `directoryAttendees`, entity queries, directory wording, contact disclosure, and vCards.
 - `AttendeeEntity` has no email or phone property, so query results, the attendee snippet, and the Spotlight attribute set cannot carry them.
 - `AttendeeSnippetCopy` drops the name when the person is not discoverable.
-- `ReadPublicAttendeeContactIntent` is the only intent that speaks public email, phone, and social links. Its policy is `.requiresLocalDeviceAuthentication`, and `perform` calls `requestConfirmation` before the dialog. It is not a `@AppIntent(.tool)`.
+- `ReadPublicAttendeeContactIntent` is the only intent that speaks public email, phone, and social links. Its policy is `.requiresLocalDeviceAuthentication`. `perform` asks for confirmation before the dialog: `requestConfirmation(actionName:dialog:)` on iOS 18 / macOS 15 / watchOS 11 / tvOS 18 / visionOS 2, and `requestConfirmation(result:confirmationActionName:showPrompt:)` on the older deployment targets. The prompt is the question, not the contact fields. It is not a `@AppIntent(.tool)`.
 - A profile edit that turns contact flags or messaging consent off is re-read from the stored profile by the directory projection, the vCard, and `AttendeeMessagingPolicy`. The demo transport still records `demoOnDevice` and the on-device notice. No server was added.
 
 ## Skills and context

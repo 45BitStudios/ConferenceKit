@@ -125,8 +125,12 @@ public struct SearchAttendeesIntent: AppIntent {
 ///
 /// Authentication is the lock-screen gate (`requiresLocalDeviceAuthentication`).
 /// It is not the privacy flag and it is not messaging consent. Opted-out fields
-/// are already absent from the directory record. `requestConfirmation` runs
-/// before the fields are spoken. This is an ordinary App Intent, not a Siri custom tool.
+/// are already absent from the directory record. Confirmation runs before the
+/// fields are spoken. On iOS 18, macOS 15, watchOS 11, tvOS 18, and visionOS 2
+/// that is `requestConfirmation(actionName:dialog:)`. Older systems use the
+/// iOS 16 `requestConfirmation(result:confirmationActionName:showPrompt:)`
+/// overload, whose prompt is only the question, not the contact fields.
+/// This is an ordinary App Intent, not a Siri custom tool.
 public struct ReadPublicAttendeeContactIntent: AppIntent {
     public static let title: LocalizedStringResource = "Read Public Contact"
     public static let description = IntentDescription("Reads the email, phone, and social links an attendee marked public, after the device is unlocked.")
@@ -154,10 +158,16 @@ public struct ReadPublicAttendeeContactIntent: AppIntent {
         guard let contact = AttendeeContactDisclosure.make(attendeeID: target.id, in: manifest, profile: profile) else {
             return .result(dialog: IntentDialog("That person isn’t in the directory."))
         }
-        try await requestConfirmation(
-            actionName: .view,
-            dialog: IntentDialog(stringLiteral: "Show the public contact fields for \(contact.displayName)?")
-        )
+        let question = IntentDialog(stringLiteral: "Show the public contact fields for \(contact.displayName)?")
+        if #available(iOS 18.0, macOS 15.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
+            try await requestConfirmation(actionName: .view, dialog: question)
+        } else {
+            _ = try await requestConfirmation(
+                result: .result(dialog: question),
+                confirmationActionName: .view,
+                showPrompt: true
+            )
+        }
         return .result(dialog: IntentDialog(stringLiteral: contact.spoken))
     }
 }
