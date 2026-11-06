@@ -115,6 +115,8 @@ targets:
       - path: ../../SiriPreview/Evaluations
     dependencies:
       - target: ConferenceKitDemo
+      - package: ConferenceKit
+        product: ConferenceKit
     info:
       path: ConferenceKitDemoSiriEvaluations/Info.plist
       properties:
@@ -138,6 +140,7 @@ schemes:
   ConferenceKitDemoSiriEvaluations:
     build:
       targets:
+        ConferenceKitDemo: all
         ConferenceKitDemoSiriEvaluations: [test]
     test:
       targets:
