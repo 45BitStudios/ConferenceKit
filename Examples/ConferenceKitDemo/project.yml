@@ -33,7 +33,9 @@ targets:
       - path: ConferenceKitDemo
         excludes:
           - Skills.skillsbundle
-      # Siri skills (27.3 preview). Bundle layout follows the Larder sample (Artem Novichkov, MIT); not confirmed by Apple docs.
+      # Siri skills (27.3 preview). Folder layout matches Apple's "Orchestrating complex actions with app skills":
+      # one Skills.skillsbundle, Skills/<name>/SKILL.md, name plus description only.
+      # Copying the folder into resources is not proof that Siri indexed it. That needs a signed device.
       - path: ConferenceKitDemo/Skills.skillsbundle
         type: folder
         buildPhase: resources

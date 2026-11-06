@@ -1,6 +1,6 @@
 import Foundation
 
-public enum ConferenceAskKind: String, Sendable, Equatable {
+public enum ConferenceAskKind: String, Sendable, Equatable, CaseIterable {
     case whenSpeaking
     case nextInRoom
     case whatsNext

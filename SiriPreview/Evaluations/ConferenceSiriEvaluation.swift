@@ -99,4 +99,36 @@ func attendeeDirectoryLookup() async throws {
     let result = EvaluationContext.current.result
     #expect(result.aggregateValue(.mean(of: .intentsAllPass)) == 1)
 }
+
+// Paraphrases of the same tools. This file cannot represent a locked device,
+// a missing Siri connection, a snippet's pixels, or which skill was selected.
+// Those checks are in docs/SiriDeviceChecklist.md and need a signed device.
+@Test(
+    .evaluates(ConferenceSiriEvaluation(
+        name: "Paraphrases",
+        dataset: SiriScenarioLoader {
+            SiriScenario {
+                UserTurn("Anything happening right now?") {
+                    Calls {
+                        conferenceIntents.intents["WhatsNextTool"]
+                    }
+                }
+                UserTurn("Who's around in the directory?") {
+                    Calls {
+                        conferenceIntents.intents["FindAttendeeTool"]
+                    }
+                }
+                UserTurn("Jot down that the fold matters") {
+                    Calls {
+                        conferenceIntents.intents["AddNoteTool"]
+                    }
+                }
+            }
+        }
+    ))
+)
+func paraphrasedScheduleAndDirectory() async throws {
+    let result = EvaluationContext.current.result
+    #expect(result.aggregateValue(.mean(of: .intentsAllPass)) == 1)
+}
 #endif

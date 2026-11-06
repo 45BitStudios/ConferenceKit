@@ -26,7 +26,7 @@ Consent is the attendee’s privacy flags and `messagingConsent`. Visibility, wh
 
 ## Skills and context
 
-Skills in `SiriPreview/Skills` are optional. `find-attendee` says the tool works without the skill, does not require a tool order, and does not roll anything back. `plan-afternoon` says the same about rollback.
+`SiriPreview/Skills` and the demo `Skills.skillsbundle` are the same five files: plan the day, write notes, recall notes, export notes, and find an attendee. They are optional guidance for the custom Siri tools. The on-device Ask skills are separate `AskSkill` values in `ConferenceAskLink`, including `findAttendee`. A package test checks front matter and that the two markdown copies match. It does not prove Siri indexed the bundle. `docs/SiriDeviceChecklist.md` is the signed-device list and has not been run.
 
 The lab’s four ways a custom tool becomes eligible are: the app is named, the app is foreground, a Live Activity is up, or an app entity was retrieved through search. This package already indexes sessions, speakers, and discoverable attendees, tags rows with `appEntityIdentifier` under the preview flag, and starts a session Live Activity from the session screen under that flag. Attendee tools do not depend on the skill to enforce those gates. The app still checks directory membership and messaging consent itself.
 

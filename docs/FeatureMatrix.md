@@ -89,7 +89,7 @@ Off unless `SIRI_AI_PREVIEW` is set. The default Xcode 27.2 build does not compi
 | `@AppEntity(.generable)` session search | `SessionQueryEntity`. |
 | Snippet cards | `SessionSnippetIntent`, `SpeakerSnippetIntent`, and `AttendeeSnippetIntent`. The attendee card is the name and role. The lab stated entity snippets ship with the 27.3 OS release. Custom ToolIntents and skills stay on the developer preview: internal TestFlight, with an App Store window the lab described as spring. |
 | Foreground context and Live Activity | Session screen sets a user activity and a Live Activity while the flag is on, so a note can attach to the session on screen. |
-| App skills | `plan-afternoon` and `recall-notes` markdown for the host’s `Skills.skillsbundle`. Skills guide Siri. They do not force tool order. |
+| App skills | Five files, identical in `SiriPreview/Skills` and the demo `Skills.skillsbundle`: plan the day, write notes, recall notes, export notes, find an attendee. They guide custom Siri tools in prose. They do not force tool order. Contact details and messages tell the person to use the app. A package test checks front matter and that the two copies match. It does not prove Siri indexed the bundle. |
 | Siri Evaluations | Sample file only. Not part of `swift test`. |
 
 ## Not in the kit
