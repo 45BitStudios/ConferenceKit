@@ -180,6 +180,38 @@ public struct ExportNotesTool: AppIntent {
     }
 }
 
+/// Custom Siri tool. Siri runs this through Private Cloud Compute. It is not an offline
+/// App Intent and it does not return email or phone. Search Attendees is the on-device fallback.
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+@AppIntent(.tool)
+public struct FindAttendeeTool: AppIntent {
+    public static let title: LocalizedStringResource = "Find Attendee"
+    public static let description = IntentDescription(
+        LocalizedStringResource("Finds people who opted into the directory and returns their names and roles. It does not return email or phone. Siri runs this custom tool through Private Cloud Compute, so it does not run when that connection is unavailable."),
+        searchKeywords: [LocalizedStringResource("attendee"), LocalizedStringResource("directory"), LocalizedStringResource("who is here")]
+    )
+
+    @Parameter(title: "Name", description: LocalizedStringResource("A name, role, or company. Empty lists the directory."))
+    public var name: String
+
+    public init() {}
+
+    @MainActor
+    public func perform() async throws -> some IntentResult & ReturnsValue<[AttendeeEntity]> & ProvidesDialog {
+        guard let manifest = await IntentCatalog.manifest() else {
+            return .result(value: [], dialog: IntentDialog("No conference is loaded."))
+        }
+        let profile = await ConferenceCatalog.shared.currentAttendee()
+        let answer = AttendeeDirectoryAnswers.reply(query: name, manifest: manifest, profile: profile)
+        let matches = ConferenceSearch.attendees(
+            in: manifest,
+            matching: AttendeeFilter(query: name),
+            profile: profile
+        )
+        return .result(value: matches.map(AttendeeEntity.init), dialog: IntentDialog(stringLiteral: answer.spoken))
+    }
+}
+
 @available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
 @AppEntity(.generable)
 public struct SessionQueryEntity: TransientAppEntity {
@@ -460,6 +492,7 @@ enum ConferenceSiriPreviewIndex {
         let speakers = manifest.speakers.map(SpeakerEntity.init)
         try? await index.indexAppEntities(speakers)
         try? await index.indexAppEntities(speakers.map(SiriSpeakerEntity.init))
+        try? await index.indexAppEntities(manifest.directoryAttendees().map(AttendeeEntity.init))
         try? await index.indexAppEntities(manifest.tracks.map(TrackEntity.init))
         try? await index.indexAppEntities(manifest.rooms.map(RoomEntity.init))
         if let venue = manifest.conference.venue {
@@ -516,6 +549,28 @@ public struct SpeakerSnippetIntent: SnippetIntent {
     @MainActor
     public func perform() async throws -> some IntentResult & ShowsSnippetView {
         .result(view: SessionSnippetCard(title: speaker.name, detail: speaker.affiliation))
+    }
+}
+
+@available(iOS 27.3, macOS 27.3, visionOS 27.3, *)
+public struct AttendeeSnippetIntent: SnippetIntent {
+    public static let title: LocalizedStringResource = "Attendee Card"
+
+    @Parameter(title: "Attendee")
+    public var attendee: AttendeeEntity
+
+    public init() {}
+
+    public init(attendee: AttendeeEntity) {
+        self.attendee = attendee
+    }
+
+    @MainActor
+    public func perform() async throws -> some IntentResult & ShowsSnippetView {
+        .result(view: SessionSnippetCard(
+            title: attendee.displayName,
+            detail: attendee.affiliation
+        ))
     }
 }
 

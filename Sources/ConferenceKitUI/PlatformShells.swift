@@ -53,6 +53,18 @@ struct VisionShell: View {
         TabView(selection: $router.section) {
             stack(.schedule) { ScheduleList(store: store, router: router, push: false) }
             stack(.speakers) { SpeakerList(store: store, router: router, push: false) }
+            NavigationStack {
+                AttendeeDirectory(store: store, router: router, push: false)
+                    .navigationDestination(item: Binding(
+                        get: { router.section == .attendees ? router.attendeeRoute : nil },
+                        set: { router.attendeeRoute = $0 }
+                    )) { route in
+                        RoutedDetail(store: store, router: router, route: route, push: false, inlineNotes: true)
+                    }
+            }
+            .searchable(text: $store.searchText, prompt: "Sessions, speakers, attendees, notes")
+            .tabItem { Label(ConferenceSection.attendees.title, systemImage: ConferenceSection.attendees.systemImage) }
+            .tag(ConferenceSection.attendees)
             stack(.favorites) { ScheduleList(store: store, router: router, push: false, favoritesOnly: true) }
             NavigationStack {
                 InfoMenu(router: router, push: false)
@@ -85,7 +97,7 @@ struct VisionShell: View {
                     }
                 }
         }
-        .searchable(text: $store.searchText, prompt: "Sessions, speakers, notes")
+        .searchable(text: $store.searchText, prompt: "Sessions, speakers, attendees, notes")
         .tabItem { Label(section.title, systemImage: section.systemImage) }
         .tag(section)
     }
@@ -158,6 +170,9 @@ struct PadTabShell: View {
             Tab(ConferenceSection.speakers.title, systemImage: ConferenceSection.speakers.systemImage, value: ConferenceSection.speakers) {
                 split { SpeakerList(store: store, router: router, push: false) }
             }
+            Tab(ConferenceSection.attendees.title, systemImage: ConferenceSection.attendees.systemImage, value: ConferenceSection.attendees) {
+                split { AttendeeDirectory(store: store, router: router, push: false) }
+            }
             Tab(ConferenceSection.favorites.title, systemImage: ConferenceSection.favorites.systemImage, value: ConferenceSection.favorites) {
                 split { ScheduleList(store: store, router: router, push: false, favoritesOnly: true) }
             }
@@ -174,7 +189,7 @@ struct PadTabShell: View {
         } detail: {
             SplitDetail(store: store, router: router)
         }
-        .searchable(text: $store.searchText, prompt: "Sessions, speakers, notes")
+        .searchable(text: $store.searchText, prompt: "Sessions, speakers, attendees, notes")
     }
 }
 #endif

@@ -16,6 +16,17 @@ extension SessionEntity: IndexedEntity {
 }
 
 @available(iOS 18.0, macOS 15.0, watchOS 11.0, visionOS 2.0, *)
+extension AttendeeEntity: IndexedEntity {
+    public var attributeSet: CSSearchableItemAttributeSet {
+        let attributes = defaultAttributeSet
+        attributes.title = displayName
+        attributes.contentDescription = bio
+        attributes.comment = affiliation
+        return attributes
+    }
+}
+
+@available(iOS 18.0, macOS 15.0, watchOS 11.0, visionOS 2.0, *)
 extension SpeakerEntity: IndexedEntity {
     public var attributeSet: CSSearchableItemAttributeSet {
         let attributes = defaultAttributeSet
@@ -35,8 +46,10 @@ public enum ConferenceSpotlight {
         try? await index.deleteAllSearchableItems()
         let sessions = manifest.sessions.map { SessionEntity($0, manifest: manifest) }
         let speakers = manifest.speakers.map(SpeakerEntity.init)
+        let attendees = manifest.directoryAttendees().map(AttendeeEntity.init)
         try? await index.indexAppEntities(sessions)
         try? await index.indexAppEntities(speakers)
+        try? await index.indexAppEntities(attendees)
         #endif
     }
 }

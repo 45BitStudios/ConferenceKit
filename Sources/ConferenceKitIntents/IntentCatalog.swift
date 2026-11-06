@@ -18,6 +18,12 @@ enum IntentCatalog {
         return snapshot.manifest
     }
 
+    static func directoryAttendees() async -> [Attendee] {
+        guard let manifest = await manifest() else { return [] }
+        let profile = await ConferenceCatalog.shared.currentAttendee()
+        return ConferenceSearch.attendees(in: manifest, profile: profile)
+    }
+
     static func favoriteSessionIDs() async -> Set<String> {
         if let manifest = await ConferenceCatalog.shared.current() {
             let stored = FavoritesStore.readSessionIDs(

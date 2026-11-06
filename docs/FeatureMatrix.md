@@ -34,7 +34,7 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 | Speakers, bios, socials | iOS Conf SG site, every peer app | Implemented. |
 | Favorites / My Schedule | WWDC, Sessionize | Implemented. Sessions and speakers, per conference id. |
 | Now / next | WWDC, watch complications | Implemented. All sessions happening now, and the next start boundary. |
-| Search | WWDC, Sessionize | Implemented. Sessions, speakers, rooms, tracks, and notes. |
+| Search | WWDC, Sessionize | Implemented. Sessions, speakers, rooms, tracks, notes, and the public attendee directory. |
 | Venue, map, directions | iOS Conf SG (Alliance Française, MRT), WWDC | Implemented. Map on iOS, macOS, and visionOS. Directions URL everywhere. |
 | Sponsors and tiers | iOS Conf SG prospectus, Swift conferences | Implemented. |
 | Organizers | Conference sites | Implemented. |
@@ -66,9 +66,9 @@ Notes are per session, stored as JSON plus image files (app group when `Conferen
 
 | Feature | Status |
 | --- | --- |
-| App entities | Implemented. Conference, Day, Session, Speaker, Track, Room, Venue, Sponsor, Session Note. String queries on each. |
+| App entities | Implemented. Conference, Day, Session, Speaker, Attendee, Track, Room, Venue, Sponsor, Session Note. String queries on each. Attendee results are the public directory only. |
 | App enums | Implemented. Session kind, sponsor tier, reminder lead. |
-| Intents | Implemented. Open session, open speaker, what’s next, my schedule today, search, favorite, unfavorite, favorite next, add one or all favorites to Calendar, set reminder, add note, show notes, export notes. |
+| Intents | Implemented. Open session, open speaker, open attendee, what’s next, my schedule today, search sessions, search attendees, favorite, unfavorite, favorite next, add one or all favorites to Calendar, set reminder, add note, show notes, export notes. |
 | Assistant schema | Implemented for `system.search` on iOS, macOS, and visionOS. See the PR for the `criteria.term` assumption. |
 | Spotlight | Implemented for sessions and speakers. The Siri AI preview flag also indexes the conference, days, tracks, rooms, venue, sponsors, notes, and My Schedule. |
 | App Shortcuts template | Implemented. The host app target must declare the provider. The package includes `ConferenceAppShortcuts` and `ConferenceShortcutTemplate`. |
@@ -84,10 +84,10 @@ Off unless `SIRI_AI_PREVIEW` is set. The default Xcode 27.2 build does not compi
 
 | Piece | Status |
 | --- | --- |
-| `@AppIntent(.tool)` for what’s next, find session, favorite, add note, show notes, export notes | In `SiriPreview.swift`, compiled only with the flag. |
+| `@AppIntent(.tool)` for what’s next, find session, favorite, add note, show notes, export notes, create note, find attendee | In `SiriPreview.swift`, compiled only with the flag. Lab guidance: Siri runs these through Private Cloud Compute. They are not the offline App Intents. Find attendee returns names and roles only. |
 | Indexing keys and traits on the main entities, including favorites | Same file. `@ComputedProperty` / `@DeferredProperty` and `IndexedEntity` for the types that were not already indexed. |
 | `@AppEntity(.generable)` session search | `SessionQueryEntity`. |
-| Snippet cards | `SessionSnippetIntent` and `SpeakerSnippetIntent`. The card-view result type is inferred from the preview overview plus the earlier snippet intent API. |
+| Snippet cards | `SessionSnippetIntent`, `SpeakerSnippetIntent`, and `AttendeeSnippetIntent`. The attendee card is the name and role. The lab stated entity snippets ship with the 27.3 OS release. Custom ToolIntents and skills stay on the developer preview: internal TestFlight, with an App Store window the lab described as spring. |
 | Foreground context and Live Activity | Session screen sets a user activity and a Live Activity while the flag is on, so a note can attach to the session on screen. |
 | App skills | `plan-afternoon` and `recall-notes` markdown for the host’s `Skills.skillsbundle`. Skills guide Siri. They do not force tool order. |
 | Siri Evaluations | Sample file only. Not part of `swift test`. |
@@ -97,19 +97,32 @@ Off unless `SIRI_AI_PREVIEW` is set. The default Xcode 27.2 build does not compi
 | Feature | Why |
 | --- | --- |
 | AskKit inside the iOS 17 package | AskKit supports every Apple platform at version 27 or later. SwiftPM rejects that dependency from a package whose deployment target is lower, so the root package does not link it. `ConferenceAskAnswers` answers speaker, room, notes, and favorites questions and is tested. `Integration/ConferenceKitAsk` links AskKit and builds the `AskAssistant` for an OS 27 host. |
-| Attendee messaging, meeting booking, people discovery | Whova and Grip. Needs accounts and a server. A JSON kit cannot do this honestly. |
+| Meeting booking | Still needs accounts and a server. Attendee directory, contact cards, and on-device messaging are in the kit. See below. |
 | Push from a server | Host infrastructure. Local alarms and notifications cover the on-device case. |
 | In-app video playback | Optional `recordingURL` opens out. A player, DRM, and offline video are a different product. |
 | Tickets and registration | Commerce stays on the web. |
 | Surveys and session ratings | Needs a backend and a moderation story. |
 | Indoor wayfinding | A pin, address, directions text, and an Apple Maps link. Not a floor plan. |
-| Badge QR and check-in | Privacy-sensitive and needs the registration system. |
+| Badge QR and check-in | Privacy-sensitive and needs the registration system. The attendee QR code is a public contact card, not a badge. |
 | AlarmKit countdown Live Activity | Fixed alarms do not require one. A countdown UI belongs in the host widget extension. |
 | visionOS widgets | Widget families on visionOS 1 are not part of the contract this package can confirm. The UI still runs. |
 | Translated catalogs | Strings are localizable. Only English is filled in. |
 | Several conferences in one binary | One manifest at a time. Favorites are keyed by conference id so a later manifest does not mix them. |
 | SwiftData / CloudKit notes | File JSON works on every declared platform and in an app group. Cloud sync can sit on top later. |
 | Rich text as an attributed document | Notes are Markdown-friendly plain text plus photos, so export is the same bytes the editor stores. |
+
+## Attendees
+
+| Feature | Status |
+| --- | --- |
+| Directory | Implemented. Discoverable attendees only. List on iPhone, iPad, Mac, Watch, and Vision. Grid on Apple TV. Search and a ticket filter. |
+| Privacy | Implemented. Discoverable, email, phone, and social are independent and default to off. The directory, App Entity, directory wording, snippet, Spotlight text, vCard, QR code, and share sheet use that public projection. Email and phone are not entity properties. Reading them is a separate intent that requires the device to be unlocked and a confirmation. That lock-screen gate is not the privacy flag and not messaging consent. |
+| My Profile | Implemented. Local JSON. Edits apply on this device and seed from `isCurrentUser` when the file does not exist yet. |
+| Contact card | Implemented. vCard 3.0 with RFC 6350 escaping. QR on iPhone, iPad, Mac, Vision, and Apple TV. ShareLink (the iOS share sheet, including AirDrop) on iPhone, iPad, Mac, Vision, and Watch. |
+| Save to Contacts | Implemented. ContactsUI review sheet on iPhone, iPad, and Vision. Contacts framework on Mac and Watch. tvOS shows the QR code instead. |
+| Import | Implemented. `.vcf` file importer on iPhone, iPad, Mac, and Vision. Contact picker on iPhone, iPad, and Vision. Imported cards stay on the My Profile screen and are not added to the directory. Watch and TV say to import on another device. |
+| Messaging | Implemented as a local demo. Conversation list, thread, unread, block, and report. `AttendeeMessageTransport` is the seam. `LocalDemoMessageTransport` never delivers a message. See `docs/AttendeeMessaging.md` for the later HTTP, WebSocket, and push contract. |
+| App Shortcut | Find Attendee is the tenth shortcut, which is the App Shortcuts cap. Search Attendees is a normal intent. |
 
 ## Host pieces that stay outside the package
 

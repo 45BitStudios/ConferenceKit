@@ -8,3 +8,4 @@ Prefer sessions that are still ahead, and mention the room and start time from t
 If the person already saved a matching session, say so. Do not invent talks that the find session tool did not return.
 Offer to save a session with the favorite session tool only after you have named it.
 Do not export notes unless they asked for notes.
+This skill is guidance. If one of those tools does not run, answer from the tools that did. Do not assume an earlier step can be rolled back.

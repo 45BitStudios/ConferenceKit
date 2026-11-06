@@ -8,6 +8,7 @@ import ConferenceKitIntents
 enum SiriRowEntity {
     case session(String)
     case speaker(String)
+    case attendee(String)
     case note(UUID)
 }
 
@@ -22,6 +23,8 @@ extension View {
                 appEntityIdentifier(EntityIdentifier(for: SessionEntity.self, identifier: id))
             case .speaker(let id):
                 appEntityIdentifier(EntityIdentifier(for: SpeakerEntity.self, identifier: id))
+            case .attendee(let id):
+                appEntityIdentifier(EntityIdentifier(for: AttendeeEntity.self, identifier: id))
             case .note(let id):
                 appEntityIdentifier(EntityIdentifier(for: SessionNoteEntity.self, identifier: id.uuidString))
             }

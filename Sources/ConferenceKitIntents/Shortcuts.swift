@@ -16,6 +16,9 @@ public struct ConferenceIntentsPackage: AppIntentsPackage {}
 
 /// App Shortcut phrases for the conference intents.
 ///
+/// Apple’s App Shortcuts cap is ten. This provider is at that cap.
+/// Search Attendees stays a normal intent so the directory is still reachable.
+///
 /// `AppShortcutsBuilder` needs literal `AppShortcut` expressions, so the list
 /// lives in `ConferenceAppShortcuts`. A host app that declares its own
 /// provider copies the entries it wants; `shortcuts` returns the same list for
@@ -105,6 +108,15 @@ public struct ConferenceAppShortcuts: AppShortcutsProvider {
                 ],
                 shortTitle: "Export Notes",
                 systemImageName: "square.and.arrow.up"
+            )
+            AppShortcut(
+                intent: OpenAttendeeIntent(),
+                phrases: [
+                    "Find \(\.$target) in \(.applicationName)",
+                    "Open attendee \(\.$target) in \(.applicationName)"
+                ],
+                shortTitle: "Find Attendee",
+                systemImageName: "person.crop.rectangle"
             )
     }
 

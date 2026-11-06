@@ -88,6 +88,7 @@ ConferenceKitConfiguration.shared.setUseAlarmKit(false)
 | `NSCameraUsageDescription` | Required to photograph a slide into the current session’s notes. The cover-display companion starts a rear-camera capture session. |
 | `ConferenceKitAppGroup` | App group id shared by the app and the widget extension. Same key in both Info.plists. |
 | `NSUserActivityTypes` | `studio45.conferencekit.open-session`, `studio45.conferencekit.open-speaker`. |
+| `NSContactsUsageDescription` | Saving an attendee card to Contacts on iPhone, iPad, Vision, Mac, and Watch. The vCard itself can be shared without this key. |
 
 AlarmKit is off by default. Favorites use a local notification. Turning on “Alarms before sessions” calls AlarmKit, which needs the AlarmKit capability. That entitlement is not approved. Without it, scheduling fails and the kit still falls back to the notification.
 
@@ -121,7 +122,9 @@ The app writes `conference-snapshot.json` into the app group (or the cache) when
 
 See `schema/conference.schema.json` and `Sources/ConferenceKit/Resources/SampleConference.json`.
 
-Schema 1.0 documents still decode. Sponsors, organizers, announcements, code of conduct, Wi-Fi, coordinates, `slidesURL`, and `recordingURL` are optional.
+Schema 1.0 documents still decode. Sponsors, organizers, announcements, attendees, code of conduct, Wi-Fi, coordinates, `slidesURL`, and `recordingURL` are optional.
+
+Attendees default to hidden. Email, phone, and social links are omitted from the directory, the contact card, and the QR code unless that person’s privacy flags turn them on. My Profile is stored on device. Messages go through `AttendeeMessageTransport`; the built-in transport is a local demo and does not deliver anything. The later server contract is `docs/AttendeeMessaging.md`.
 
 Session times are ISO-8601 with a numeric offset. Day grouping uses `conference.timezone`, not the device zone.
 
@@ -176,6 +179,8 @@ The preview is iOS 27.3, iPadOS 27.3, macOS 27.3, and visionOS 27.3. It is not o
 
 Enable it with Xcode 27.3 by adding `swiftSettings: [.define("SIRI_AI_PREVIEW")]` to the `ConferenceKitIntents` and `ConferenceKitUI` targets in `Package.swift`, then build a development-signed app. The preview works for development-signed builds and internal TestFlight testers. It does not work for external TestFlight testers or the App Store, and the API can still change.
 
+Custom Siri tools and the on-device directory are different paths. `@AppIntent(.tool)` is compiled only with the flag, on iOS, macOS, and visionOS. The group lab described those tools as running through Siri’s Private Cloud Compute, so they are not an offline feature. Search Attendees and the Ask rules run on device without that connection. Watch has no custom ToolIntent in this package, and nothing here relays a watch request to the iPhone. `docs/IntelligenceLabCoverage.md` separates what the code does, what the labs said, and what still needs a device.
+
 What that flag turns on:
 
 - `@AppIntent(.tool)` tools for what’s next, find session, favorite, add note, show notes, and export notes. Titles and parameter descriptions are written for the model.
@@ -183,11 +188,11 @@ What that flag turns on:
 - A generable `SessionQueryEntity` (`@AppEntity(.generable)`) so a search can be filled from the request.
 - Branded snippet cards for a session or a speaker. The snippet result API is the part not shown as a full sample in the preview article.
 - A Live Activity and an `NSUserActivity` while a session is on screen, so “add a note: …” can use the foreground session without the app name.
-- App skills to copy into the host’s `Skills.skillsbundle`: `SiriPreview/Skills/plan-afternoon/SKILL.md` and `SiriPreview/Skills/recall-notes/SKILL.md`. One bundle per app target, name matching the folder, `name` and `description` only.
+- App skills to copy into the host’s `Skills.skillsbundle`: `SiriPreview/Skills/plan-afternoon/SKILL.md`, `SiriPreview/Skills/recall-notes/SKILL.md`, and `SiriPreview/Skills/find-attendee/SKILL.md`. One bundle per app target, name matching the folder, `name` and `description` only.
 - A Siri Evaluations sample at `SiriPreview/Evaluations/ConferenceSiriEvaluation.swift`. It is not in the package test target. Add it to a UI testing target signed by the same team, with the flag set. `SiriService.run(scenario:)` is from the Siri Evaluations docs.
 
 ## Tests
 
-`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, and the Ask answers.
+`swift test` on a Mac with a current Xcode. The suite covers decoding, conference-zone day grouping, search, favorites, reminder plans, share links, calendar drafts, Duo pose and fold math, live-session follow, notes, entity queries, attendee privacy, vCard escaping, the demo message transport, and the Ask answers.
 
 Xcode 27.2 already built the previous head (880385a) for iOS, iOS Simulator, macOS, watchOS, tvOS, and visionOS, and `swift test` passed. This follow-up was not compiled here. The matrix in `docs/FeatureMatrix.md` is the list of what is implemented versus deliberately left out.

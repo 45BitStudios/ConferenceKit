@@ -7,6 +7,8 @@ import Testing
     let manifest = try await ConferenceLoader().load(.sample)
     #expect(manifest.sessions.count == 4)
     #expect(manifest.sponsors.count == 2)
+    #expect(manifest.attendees.count == 4)
+    #expect(manifest.directoryAttendees().map(\.id).sorted() == ["alex-rivera", "jordan-hale", "maya-chen"])
     #expect(manifest.wifi?.networkName == "SampleConf")
     #expect(manifest.conferenceDays.count == 2)
     #expect(manifest.validate().isEmpty)
@@ -19,6 +21,7 @@ import Testing
     let manifest = try ConferenceLoader().decode(data: json)
     #expect(manifest.sessions.isEmpty)
     #expect(manifest.sponsors.isEmpty)
+    #expect(manifest.attendees.isEmpty)
     #expect(manifest.wifi == nil)
     #expect(manifest.schemaVersion == "1.0")
 }

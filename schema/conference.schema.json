@@ -15,6 +15,7 @@
     "sponsors": { "type": "array", "items": { "$ref": "#/$defs/sponsor" } },
     "organizers": { "type": "array", "items": { "$ref": "#/$defs/organizer" } },
     "announcements": { "type": "array", "items": { "$ref": "#/$defs/announcement" } },
+    "attendees": { "type": "array", "items": { "$ref": "#/$defs/attendee" } },
     "codeOfConduct": { "$ref": "#/$defs/conduct" },
     "wifi": { "$ref": "#/$defs/wifi" }
   },
@@ -141,6 +142,55 @@
         "role": { "type": "string" },
         "url": { "type": "string", "format": "uri" },
         "bio": { "type": "string" }
+      }
+    },
+    "attendee": {
+      "type": "object",
+      "required": ["id", "displayName"],
+      "description": "Sensitive contact fields are private unless the matching privacy flag is true. discoverable defaults to false. The directory, vCard, QR code, and share payload omit anything that is not marked public. Organizers should leave a value out of the file when it is not public; the kit also strips it if the flag is off.",
+      "properties": {
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string" },
+        "company": { "type": "string" },
+        "bio": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "social": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["platform", "url"],
+            "properties": {
+              "platform": { "enum": ["x", "github", "linkedin", "mastodon", "bluesky", "website", "youtube"] },
+              "url": { "type": "string", "format": "uri" }
+            }
+          }
+        },
+        "avatarAsset": { "type": "string", "description": "Image name in the host asset catalog." },
+        "avatarURL": { "type": ["string", "null"], "format": "uri" },
+        "ticket": { "$ref": "#/$defs/ticket" },
+        "privacy": { "$ref": "#/$defs/attendeePrivacy" },
+        "messagingConsent": { "type": "boolean", "default": false },
+        "isCurrentUser": { "type": "boolean", "default": false, "description": "Seeds My Profile on this device when no local profile has been saved yet." }
+      }
+    },
+    "attendeePrivacy": {
+      "type": "object",
+      "description": "Every flag defaults to false.",
+      "properties": {
+        "discoverable": { "type": "boolean", "default": false },
+        "showsEmail": { "type": "boolean", "default": false },
+        "showsPhone": { "type": "boolean", "default": false },
+        "showsSocial": { "type": "boolean", "default": false }
+      }
+    },
+    "ticket": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string" },
+        "label": { "type": "string" }
       }
     },
     "announcement": {

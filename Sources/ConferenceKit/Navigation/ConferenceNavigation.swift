@@ -4,6 +4,7 @@ import Observation
 public enum ConferenceSection: String, Codable, Hashable, Sendable, CaseIterable, Identifiable {
     case schedule
     case speakers
+    case attendees
     case favorites
     case workshops
     case info
@@ -14,6 +15,7 @@ public enum ConferenceSection: String, Codable, Hashable, Sendable, CaseIterable
         switch self {
         case .schedule: "Schedule"
         case .speakers: "Speakers"
+        case .attendees: "Attendees"
         case .favorites: "My Schedule"
         case .workshops: "Workshops"
         case .info: "Info"
@@ -24,6 +26,7 @@ public enum ConferenceSection: String, Codable, Hashable, Sendable, CaseIterable
         switch self {
         case .schedule: "calendar"
         case .speakers: "person.2"
+        case .attendees: "person.3"
         case .favorites: "star"
         case .workshops: "hammer"
         case .info: "info.circle"
@@ -40,9 +43,11 @@ public final class ConferenceNavigation {
 
     public var pendingSessionID: String?
     public var pendingSpeakerID: String?
+    public var pendingAttendeeID: String?
     public var pendingSearch: String?
     public var pendingSection: ConferenceSection?
     public var pendingShowsNotes = false
+    public var pendingShowsMessages = false
     public var sceneActivationError: String?
     public var reminderMessage: String?
 
@@ -60,6 +65,16 @@ public final class ConferenceNavigation {
     public func openSpeaker(id: String) {
         pendingSpeakerID = id
         pendingSection = .speakers
+    }
+
+    public func openAttendee(id: String) {
+        pendingAttendeeID = id
+        pendingSection = .attendees
+    }
+
+    public func showMessages() {
+        pendingShowsMessages = true
+        pendingSection = .attendees
     }
 
     public func search(_ query: String) {

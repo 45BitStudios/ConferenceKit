@@ -5,6 +5,10 @@ import SwiftUI
 enum ConferenceRoute: Hashable {
     case session(String)
     case speaker(String)
+    case attendee(String)
+    case myProfile
+    case messages
+    case conversation(String)
     case venue
     case wifi
     case announcements
@@ -68,7 +72,11 @@ final class ConferenceRouter {
     var section: ConferenceSection = .schedule
     var selectedSessionID: String?
     var selectedSpeakerID: String?
+    var selectedAttendeeID: String?
+    var selectedConversationID: String?
     var showsNotes = false
+    var showsMyProfile = false
+    var showsMessages = false
     var followLive = false
     var day: Date?
     var trackID: String?
@@ -97,10 +105,86 @@ final class ConferenceRouter {
         if push { path.append(ConferenceRoute.speaker(id)) }
     }
 
+    func openAttendee(_ id: String, push: Bool) {
+        selectedAttendeeID = id
+        showsMyProfile = false
+        showsMessages = false
+        selectedConversationID = nil
+        section = .attendees
+        if push { path.append(ConferenceRoute.attendee(id)) }
+    }
+
+    func openMyProfile(push: Bool) {
+        showsMyProfile = true
+        showsMessages = false
+        selectedConversationID = nil
+        section = .attendees
+        if push { path.append(ConferenceRoute.myProfile) }
+    }
+
+    func openMessages(push: Bool) {
+        showsMessages = true
+        showsMyProfile = false
+        selectedConversationID = nil
+        section = .attendees
+        if push { path.append(ConferenceRoute.messages) }
+    }
+
+    /// One route for the visionOS attendee stack, which has a single destination.
+    var attendeeRoute: ConferenceRoute? {
+        get {
+            if let id = selectedConversationID, showsMessages { return .conversation(id) }
+            if showsMessages { return .messages }
+            if showsMyProfile { return .myProfile }
+            if let id = selectedAttendeeID { return .attendee(id) }
+            return nil
+        }
+        set {
+            switch newValue {
+            case .attendee(let id):
+                selectedAttendeeID = id
+                showsMessages = false
+                showsMyProfile = false
+                selectedConversationID = nil
+            case .myProfile:
+                showsMyProfile = true
+                showsMessages = false
+                selectedConversationID = nil
+            case .messages:
+                showsMessages = true
+                showsMyProfile = false
+                selectedConversationID = nil
+            case .conversation(let id):
+                showsMessages = true
+                showsMyProfile = false
+                selectedConversationID = id
+            case .none:
+                selectedAttendeeID = nil
+                showsMyProfile = false
+                showsMessages = false
+                selectedConversationID = nil
+            default:
+                break
+            }
+        }
+    }
+
+    func openConversation(_ id: String, push: Bool) {
+        showsMessages = true
+        showsMyProfile = false
+        selectedConversationID = id
+        section = .attendees
+        if push { path.append(ConferenceRoute.conversation(id)) }
+    }
+
     func open(_ route: ConferenceRoute, push: Bool) {
         switch route {
         case .session(let id): openSession(id, push: push)
         case .speaker(let id): openSpeaker(id, push: push)
+        case .attendee(let id): openAttendee(id, push: push)
+        case .myProfile: openMyProfile(push: push)
+        case .messages: openMessages(push: push)
+        case .conversation(let id): openConversation(id, push: push)
         default:
             section = .info
             if push { path.append(route) }

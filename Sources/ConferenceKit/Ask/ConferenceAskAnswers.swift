@@ -7,6 +7,7 @@ public enum ConferenceAskKind: String, Sendable, Equatable {
     case summarizeNotes
     case dayAgenda
     case favorites
+    case findAttendee
     case unknown
 
     public var skillID: String { rawValue }
@@ -57,6 +58,9 @@ public enum ConferenceAskAnswers {
         if lower.contains("favorite") || lower.contains("save") || lower.contains("my schedule") {
             return (.favorites, [:])
         }
+        if lower.contains("attendee") || lower.contains("directory") {
+            return (.findAttendee, ["name": attendeePhrase(in: text)])
+        }
         if let day = dayNumberPhrase(in: lower) {
             return (.dayAgenda, ["day": day])
         }
@@ -93,8 +97,10 @@ public enum ConferenceAskAnswers {
             spoken = dayAgenda(day: merged["day"] ?? "", catalog: catalog)
         case .favorites:
             spoken = favorites(catalog: catalog)
+        case .findAttendee:
+            spoken = findAttendee(named: merged["name"] ?? "", catalog: catalog)
         case .unknown:
-            spoken = "I can tell you when someone is speaking, what’s next, what’s next in a room, your saved sessions, or a summary of your notes."
+            spoken = "I can tell you when someone is speaking, who’s in the attendee directory, what’s next, what’s next in a room, your saved sessions, or a summary of your notes."
         }
         return ConferenceAskAnswer(kind: kind, slots: merged, spoken: spoken, facts: spoken)
     }
@@ -206,6 +212,25 @@ public enum ConferenceAskAnswers {
         return "Day \(index + 1), \(catalog.manifest.clock.dayString(first.startTime))"
     }
 
+    /// Directory answers use the public projection only. Hidden emails and phones are not spoken.
+    public static func findAttendee(named query: String, catalog: ConferenceAskCatalog) -> String {
+        let listed = catalog.manifest.directoryAttendees()
+        let name = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if name.isEmpty {
+            guard !listed.isEmpty else { return "No attendees are listed." }
+            return "Listed attendees: \(listed.map(\.displayName).joined(separator: ", "))."
+        }
+        let people = listed.filter(\.privacy.discoverable)
+        guard let person = people.first(where: { $0.matchesDirectoryQuery(name) || name.localizedStandardContains($0.displayName) }) else {
+            return "I don’t see \(name) in the attendee directory."
+        }
+        var bits = [person.displayName]
+        if !person.affiliation.isEmpty { bits.append(person.affiliation) }
+        if !person.bio.isEmpty { bits.append(person.bio) }
+        if let email = person.email, !email.isEmpty { bits.append("Email \(email)") }
+        return bits.joined(separator: ". ") + "."
+    }
+
     public static func favorites(catalog: ConferenceAskCatalog) -> String {
         let saved = catalog.manifest.sessions.filter { catalog.favoriteSessionIDs.contains($0.id) }
         guard !saved.isEmpty else { return "You haven’t saved any sessions." }
@@ -279,6 +304,25 @@ public enum ConferenceAskAnswers {
             if !phrase.isEmpty { return phrase }
         }
         return nil
+    }
+
+    private static func attendeePhrase(in text: String) -> String {
+        let lower = text.lowercased()
+        let patterns = ["attendee named ", "attendee called ", "named ", "called ", "attendee "]
+        for pattern in patterns {
+            guard let range = lower.range(of: pattern) else { continue }
+            var name = String(text[range.upperBound...])
+            let lowerName = name.lowercased()
+            for stop in [" in the directory", " in directory", "?", ".", "!"] {
+                if let end = lowerName.range(of: stop) {
+                    name = String(name[..<end.lowerBound])
+                    break
+                }
+            }
+            name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty { return name }
+        }
+        return ""
     }
 
     private static func speakerPhrase(in text: String) -> String? {

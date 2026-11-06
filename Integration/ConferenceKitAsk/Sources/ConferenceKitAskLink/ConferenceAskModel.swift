@@ -113,7 +113,12 @@ public enum ConferenceAskTools {
     @MainActor
     public static func all(catalog: @escaping @MainActor @Sendable () -> ConferenceAskCatalog) -> [any Tool] {
         let provider = CatalogProvider(catalog)
-        return [ScheduleLookupTool(provider: provider), SpeakerLookupTool(provider: provider), NotesLookupTool(provider: provider)]
+        return [
+            ScheduleLookupTool(provider: provider),
+            SpeakerLookupTool(provider: provider),
+            NotesLookupTool(provider: provider),
+            AttendeeLookupTool(provider: provider)
+        ]
     }
 }
 
@@ -221,6 +226,40 @@ public struct SpeakerLookupTool: Tool {
         else { return "No speaker named \(name)." }
         let sessions = catalog.manifest.sessions(for: speaker.id).sorted { $0.startTime < $1.startTime }
         return "\(speaker.name)\n" + ToolFormat.sessions(sessions, catalog: catalog)
+    }
+}
+
+public struct AttendeeLookupTool: Tool {
+    public let name = "attendeeLookup"
+    public let description = "Finds people in the attendee directory. Returns only fields they marked public. Hidden contact details are not included."
+    let provider: CatalogProvider
+
+    public init(provider: CatalogProvider) { self.provider = provider }
+
+    @Generable
+    public struct Arguments {
+        @Guide(description: "An attendee name, role, or company. Empty to list everyone in the directory.")
+        public var name: String
+        public init(name: String = "") { self.name = name }
+    }
+
+    public func call(arguments: Arguments) async throws -> String {
+        lookup(arguments, catalog: await provider.current())
+    }
+
+    public func lookup(_ arguments: Arguments, catalog: ConferenceAskCatalog) -> String {
+        let matches = ConferenceSearch.attendees(
+            in: catalog.manifest,
+            matching: AttendeeFilter(query: arguments.name)
+        )
+        guard !matches.isEmpty else {
+            let name = arguments.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? "No attendees are listed." : "No attendee named \(name) is listed."
+        }
+        return matches.map { attendee in
+            let contact = [attendee.email, attendee.phone].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
+            return "\(attendee.id) | \(attendee.displayName) | \(attendee.affiliation) | \(attendee.bio) | \(contact)"
+        }.joined(separator: "\n")
     }
 }
 

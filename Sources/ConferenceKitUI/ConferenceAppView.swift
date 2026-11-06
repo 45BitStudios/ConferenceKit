@@ -140,9 +140,11 @@ public struct ConferenceAppView: View {
         return [
             navigation.pendingSessionID ?? "",
             navigation.pendingSpeakerID ?? "",
+            navigation.pendingAttendeeID ?? "",
             navigation.pendingSearch ?? "",
             navigation.pendingSection?.rawValue ?? "",
-            navigation.pendingShowsNotes ? "notes" : ""
+            navigation.pendingShowsNotes ? "notes" : "",
+            navigation.pendingShowsMessages ? "messages" : ""
         ].joined(separator: "|")
     }
 
@@ -180,6 +182,14 @@ public struct ConferenceAppView: View {
             router.openSpeaker(id, push: push)
             navigation.pendingSpeakerID = nil
         }
+        if let id = navigation.pendingAttendeeID {
+            router.openAttendee(id, push: push)
+            navigation.pendingAttendeeID = nil
+        }
+        if navigation.pendingShowsMessages {
+            router.openMessages(push: push)
+            navigation.pendingShowsMessages = false
+        }
     }
 
     private var coverTitle: String {
@@ -204,6 +214,7 @@ public struct ConferenceAppView: View {
         switch link {
         case .session(let id): router.openSession(id, push: push)
         case .speaker(let id): router.openSpeaker(id, push: push)
+        case .attendee(let id): router.openAttendee(id, push: push)
         case .schedule: router.section = .schedule
         case .favorites: router.section = .favorites
         case .info: router.section = .info
