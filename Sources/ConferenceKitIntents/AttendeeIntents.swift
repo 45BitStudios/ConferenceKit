@@ -155,7 +155,7 @@ public struct ReadPublicAttendeeContactIntent: AppIntent {
             return .result(dialog: IntentDialog("That person isn’t in the directory."))
         }
         try await requestConfirmation(
-            actionName: .confirm,
+            actionName: .view,
             dialog: IntentDialog(stringLiteral: "Show the public contact fields for \(contact.displayName)?")
         )
         return .result(dialog: IntentDialog(stringLiteral: contact.spoken))
