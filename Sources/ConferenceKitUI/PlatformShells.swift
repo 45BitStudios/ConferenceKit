@@ -206,10 +206,14 @@ struct TVSessionGrid: View {
                                     .font(.caption)
                                 Spacer()
                                 if session.isHappening() {
-                                    Text("LIVE").font(.caption.bold()).foregroundStyle(.red)
+                                    Label("Live", systemImage: "dot.radiowaves.left.and.right")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.tint)
                                 }
                                 if store.favorites.contains(session.id) {
-                                    Image(systemName: "star.fill").foregroundStyle(.yellow)
+                                    Image(systemName: "star.fill")
+                                        .foregroundStyle(.tint)
+                                        .accessibilityLabel("Favorited")
                                 }
                             }
                             Text(session.title)

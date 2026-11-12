@@ -37,14 +37,11 @@ struct RegularShell: View {
         NavigationSplitView {
             List {
                 ForEach(ConferenceSection.allCases.filter { $0 != .workshops }) { section in
-                    Button {
+                    RouteRow(push: false, selected: router.section == section) {
                         router.section = section
-                    } label: {
+                    } content: {
                         Label(section.title, systemImage: section.systemImage)
-                            .font(router.section == section ? .headline : .body)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(router.section == section ? .isSelected : [])
                 }
             }
             .navigationTitle(store.conferenceName)

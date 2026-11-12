@@ -25,9 +25,9 @@ struct SpeakerList: View {
 
     var body: some View {
         List(speakers) { speaker in
-            Button {
+            RouteRow(push: push, selected: !push && router.selectedSpeakerID == speaker.id) {
                 router.openSpeaker(speaker.id, push: push)
-            } label: {
+            } content: {
                 HStack {
                     SpeakerAvatar(speaker: speaker)
                     VStack(alignment: .leading) {
@@ -38,7 +38,6 @@ struct SpeakerList: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
         }
         .navigationTitle("Speakers")
     }
@@ -50,13 +49,11 @@ struct InfoMenu: View {
 
     var body: some View {
         List(items) { item in
-            Button {
+            RouteRow(push: push, selected: !push && router.infoSelection == item.route) {
                 router.open(item.route, push: push)
-            } label: {
+            } content: {
                 Label(item.title, systemImage: item.systemImage)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .buttonStyle(.plain)
         }
         .navigationTitle("Info")
     }
@@ -119,7 +116,7 @@ struct VenueScreen: View {
                             Marker(venue.name, coordinate: CLLocationCoordinate2D(latitude: coordinate.latitude, longitude: coordinate.longitude))
                         }
                         .frame(minHeight: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .clipShape(RoundedRectangle(cornerRadius: CKRadius.media))
                     }
                     #endif
                     if let url = venue.directionsURL {
@@ -141,21 +138,29 @@ struct WiFiScreen: View {
     @State private var revealed = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        Form {
             if let wifi = store.manifest?.wifi {
-                LabeledContent("Network", value: wifi.networkName)
-                if let password = wifi.password {
-                    LabeledContent("Password", value: revealed ? password : "••••••••")
-                    Button(revealed ? "Hide password" : "Show password") { revealed.toggle() }
-                    Button { copy(password) } label: { Label("Copy password", systemImage: "doc.on.doc") }
+                Section {
+                    LabeledContent("Network", value: wifi.networkName)
+                    if let password = wifi.password {
+                        LabeledContent("Password") {
+                            Text(revealed ? password : "••••••••")
+                                .monospaced()
+                                .accessibilityLabel(revealed ? password : "Hidden")
+                        }
+                        Button(revealed ? "Hide Password" : "Show Password") { revealed.toggle() }
+                        #if os(iOS) || os(macOS) || os(visionOS)
+                        Button { copy(password) } label: { Label("Copy Password", systemImage: "doc.on.doc") }
+                        #endif
+                    }
+                } footer: {
+                    if let notes = wifi.notes { Text(notes) }
                 }
-                if let notes = wifi.notes { Text(notes) }
             } else {
-                Text("Wi-Fi details aren’t in this manifest.")
+                Text("This conference hasn’t shared Wi-Fi details.")
+                    .foregroundStyle(.secondary)
             }
-            Spacer()
         }
-        .padding()
         .navigationTitle("Wi-Fi")
     }
 
@@ -176,9 +181,9 @@ struct AnnouncementList: View {
 
     var body: some View {
         List(store.announcements) { item in
-            Button {
+            RouteRow(push: push, selected: !push && router.infoSelection == .announcement(item.id)) {
                 router.open(.announcement(item.id), push: push)
-            } label: {
+            } content: {
                 VStack(alignment: .leading) {
                     Text(item.title).font(.headline)
                     Text(item.postedAt.formatted(date: .abbreviated, time: .shortened))
@@ -186,7 +191,6 @@ struct AnnouncementList: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .buttonStyle(.plain)
         }
         .navigationTitle("Announcements")
     }
@@ -266,7 +270,8 @@ struct ConductScreen: View {
                         Link(destination: url) { Label(email, systemImage: "envelope") }
                     }
                 } else {
-                    Text("No code of conduct is in this manifest.")
+                    Text("This conference hasn’t shared a code of conduct.")
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding()
@@ -287,11 +292,12 @@ struct NotesSearchScreen: View {
             let notes = store.notesStore?.search(query, manifest: store.manifest) ?? []
             if notes.isEmpty {
                 Text("No notes yet.")
+                    .foregroundStyle(.secondary)
             }
             ForEach(notes) { note in
-                Button {
+                RouteRow(push: push) {
                     router.openSession(note.sessionID, push: push)
-                } label: {
+                } content: {
                     VStack(alignment: .leading) {
                         Text(store.session(id: note.sessionID)?.title ?? "Session")
                             .font(.caption)
@@ -301,9 +307,7 @@ struct NotesSearchScreen: View {
                             Text(SessionProgress.offsetLabel(offset)).font(.caption.monospacedDigit())
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .buttonStyle(.plain)
             }
         }
         .searchable(text: $query, prompt: "Search notes")
@@ -328,48 +332,64 @@ struct SettingsScreen: View {
 
     var body: some View {
         Form {
-            Picker("Times", selection: $store.timeDisplay) {
-                ForEach(TimeDisplay.allCases, id: \.self) { style in
-                    Text(style.label).tag(style)
+            Section {
+                Picker("Times", selection: $store.timeDisplay) {
+                    ForEach(TimeDisplay.allCases, id: \.self) { style in
+                        Text(style.label).tag(style)
+                    }
                 }
             }
-            Toggle("Follow live session", isOn: Binding(
-                get: { router.followLive },
-                set: { router.setFollowLive($0) }
-            ))
-            Text("When this is on, laptop mode moves the stage and the open notes to the next session after the current one ends.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            Toggle("Reminders for favorites", isOn: Binding(
-                get: { store.reminderPreferences.enabled },
-                set: { enabled in
-                    store.setRemindersEnabled(enabled)
-                    Task { await ConferenceActions.syncReminders(store) }
+            Section {
+                Toggle("Follow live session", isOn: Binding(
+                    get: { router.followLive },
+                    set: { router.setFollowLive($0) }
+                ))
+            } footer: {
+                Text("When this is on, laptop mode moves the stage and the open notes to the next session after the current one ends.")
+            }
+            Section {
+                Toggle("Reminders for favorites", isOn: Binding(
+                    get: { store.reminderPreferences.enabled },
+                    set: { enabled in
+                        store.setRemindersEnabled(enabled)
+                        Task { await ConferenceActions.syncReminders(store) }
+                    }
+                ))
+                Picker("Lead time", selection: Binding(
+                    get: { store.reminderPreferences.leadTime },
+                    set: { lead in
+                        store.setReminderLeadTime(lead)
+                        Task { await ConferenceActions.syncReminders(store) }
+                    }
+                )) {
+                    Text("At start").tag(0.0)
+                    Text("5 minutes").tag(5.0 * 60)
+                    Text("10 minutes").tag(10.0 * 60)
+                    Text("15 minutes").tag(15.0 * 60)
+                    Text("30 minutes").tag(30.0 * 60)
                 }
-            ))
-            Picker("Lead time", selection: Binding(
-                get: { store.reminderPreferences.leadTime },
-                set: { lead in
-                    store.setReminderLeadTime(lead)
-                    Task { await ConferenceActions.syncReminders(store) }
-                }
-            )) {
-                Text("At start").tag(0.0)
-                Text("5 minutes").tag(5.0 * 60)
-                Text("10 minutes").tag(10.0 * 60)
-                Text("15 minutes").tag(15.0 * 60)
-                Text("30 minutes").tag(30.0 * 60)
+                #if os(iOS)
+                AlarmOptIn(store: store)
+                #endif
+            } header: {
+                Text("Reminders")
+            } footer: {
+                #if os(iOS)
+                Text("Favorites send a notification until you turn on alarms.")
+                #endif
             }
             #if os(iOS)
-            AlarmOptIn(store: store)
-            Toggle("Outer display companion", isOn: $router.coverCompanionEnabled)
-            Text("Starts the camera and shows the session title on the cover display. The Slide button saves a photo into the open session’s notes. The host app needs NSCameraUsageDescription.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            Section {
+                Toggle("Outer display companion", isOn: $router.coverCompanionEnabled)
+            } footer: {
+                Text("Shows the session title on the cover display and starts the camera. The Slide button saves a photo into the open session’s notes.")
+            }
             #endif
-            Button("Add My Schedule to Calendar") {
-                Task {
-                    router.statusMessage = await ConferenceActions.addToCalendar(store, sessions: store.favoriteSessions)
+            Section {
+                Button("Add My Schedule to Calendar") {
+                    Task {
+                        router.statusMessage = await ConferenceActions.addToCalendar(store, sessions: store.favoriteSessions)
+                    }
                 }
             }
         }
@@ -378,6 +398,8 @@ struct SettingsScreen: View {
 }
 
 #if os(iOS)
+/// Off by default: AlarmKit needs an entitlement the host app must hold.
+/// The cover-display companion likewise needs the host's `NSCameraUsageDescription`.
 private struct AlarmOptIn: View {
     var store: ConferenceStore
     @State private var useAlarms = false
@@ -390,9 +412,6 @@ private struct AlarmOptIn: View {
                 ConferenceIntentsBootstrap.prepare()
                 Task { await ConferenceActions.syncReminders(store) }
             }
-        Text("Off by default. AlarmKit needs an entitlement Apple has not approved for this app. Favorites use a notification until you turn this on.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
     }
 }
 #endif

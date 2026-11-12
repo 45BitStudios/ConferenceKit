@@ -44,7 +44,6 @@ struct NotesEditor: View {
             #endif
             editor
         }
-        .navigationTitle("Notes")
         .onChange(of: session?.id) { _, newID in
             commitIfNeeded(previousSessionID: draftSessionID)
             draftSessionID = newID
@@ -116,7 +115,7 @@ struct NotesEditor: View {
         TextEditor(text: $draft)
             .font(.body)
             .padding(8)
-            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: CKRadius.card))
             .padding()
             .accessibilityLabel("Session note")
         #endif
@@ -169,7 +168,7 @@ private struct NoteCard: View {
                 if let offset = note.offsetFromStart {
                     Text(SessionProgress.offsetLabel(offset))
                         .font(.caption.monospacedDigit().weight(.semibold))
-                        .foregroundStyle(store.theme.accentColor)
+                        .foregroundStyle(.tint)
                 }
                 if note.isTakeaway {
                     Text("Takeaway")
@@ -180,6 +179,8 @@ private struct NoteCard: View {
                     store.notesStore?.toggleStar(note.id)
                 } label: {
                     Label("Star", systemImage: note.isStarred ? "star.fill" : "star")
+                        .frame(minWidth: CKSize.hitTarget, minHeight: CKSize.hitTarget)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(note.isStarred ? "Remove star" : "Star note")
@@ -187,9 +188,13 @@ private struct NoteCard: View {
                     store.notesStore?.toggleTakeaway(note.id)
                 } label: {
                     Label("Takeaway", systemImage: note.isTakeaway ? "bookmark.fill" : "bookmark")
+                        .frame(minWidth: CKSize.hitTarget, minHeight: CKSize.hitTarget)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(note.isTakeaway ? "Remove takeaway" : "Mark as takeaway")
             }
+            .labelStyle(.iconOnly)
             if note.kind == .photo, let url = store.notesStore?.photoURL(for: note) {
                 AsyncImage(url: url) { phase in
                     switch phase {
@@ -200,7 +205,7 @@ private struct NoteCard: View {
                     }
                 }
                 .frame(maxWidth: 240, maxHeight: 160)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: CKRadius.inset))
                 .accessibilityLabel(note.body.isEmpty ? "Slide photo" : note.body)
             }
             if !note.body.isEmpty {
@@ -209,8 +214,9 @@ private struct NoteCard: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .padding(10)
-        .background(note.isTakeaway ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.leading, 12)
+        .padding(.bottom, 12)
+        .background(note.isTakeaway ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: CKRadius.card))
     }
 }
 

@@ -63,11 +63,7 @@ public struct ConferenceAppView: View {
             .onChange(of: navigationToken) { _, _ in
                 applyPendingNavigation()
             }
-            .alert("Conference", isPresented: statusPresented) {
-                Button("OK", role: .cancel) { router.statusMessage = nil }
-            } message: {
-                Text(router.statusMessage ?? "")
-            }
+            .statusToast(router)
             .alert("Couldn’t Open Window", isPresented: sceneErrorPresented) {
                 Button("OK", role: .cancel) {
                     ConferenceNavigation.shared.sceneActivationError = nil
@@ -75,7 +71,7 @@ public struct ConferenceAppView: View {
             } message: {
                 Text(ConferenceNavigation.shared.sceneActivationError ?? "")
             }
-            .overlay(alignment: .top) {
+            .safeAreaInset(edge: .top, spacing: 0) {
                 if store.isStale, let message = store.lastError {
                     StatusBanner(text: message)
                 }
@@ -144,10 +140,6 @@ public struct ConferenceAppView: View {
             navigation.pendingSection?.rawValue ?? "",
             navigation.pendingShowsNotes ? "notes" : ""
         ].joined(separator: "|")
-    }
-
-    private var statusPresented: Binding<Bool> {
-        Binding(get: { router.statusMessage != nil }, set: { if !$0 { router.statusMessage = nil } })
     }
 
     private var sceneErrorPresented: Binding<Bool> {

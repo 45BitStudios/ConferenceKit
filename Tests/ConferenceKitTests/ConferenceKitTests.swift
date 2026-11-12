@@ -1,4 +1,4 @@
-import ConferenceKit
+@testable import ConferenceKit
 import ConferenceKitIntents
 import Foundation
 import Testing
@@ -263,4 +263,17 @@ import Testing
     #expect(messages.contains("time zone"))
     #expect(messages.contains("ends before"))
     #expect(messages.contains("nobody"))
+}
+
+@Test func accentInkHoldsTextContrast() {
+    // The sample orange is 2.6:1 on the light grouped background; the ink must reach 4.5:1.
+    let orange = HexColor("#FF6A00")!
+    let light = orange.toned(againstLuminance: ConferenceTheme.lightGround)
+    #expect(orange.contrast(againstLuminance: ConferenceTheme.lightGround) < 4.5)
+    #expect(light.contrast(againstLuminance: ConferenceTheme.lightGround) >= 4.5)
+    // Already legible on dark, so the brand hue is left alone there.
+    #expect(orange.toned(againstLuminance: ConferenceTheme.darkGround) == orange)
+    // A pale accent is darkened on light and a deep one is lightened on dark.
+    #expect(HexColor("#FFE600")!.toned(againstLuminance: ConferenceTheme.lightGround).luminance < HexColor("#FFE600")!.luminance)
+    #expect(HexColor("#1A1A6E")!.toned(againstLuminance: ConferenceTheme.darkGround).contrast(againstLuminance: ConferenceTheme.darkGround) >= 4.5)
 }

@@ -1,5 +1,8 @@
 import ConferenceKit
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 struct ScheduleList: View {
     @Bindable var store: ConferenceStore
@@ -24,18 +27,16 @@ struct ScheduleList: View {
             if !store.searchText.isEmpty, let hits = store.notesStore?.search(store.searchText, manifest: store.manifest), !hits.isEmpty {
                 Section("Notes") {
                     ForEach(hits) { note in
-                        Button {
+                        RouteRow(push: push) {
                             router.openSession(note.sessionID, push: push)
-                        } label: {
+                        } content: {
                             VStack(alignment: .leading) {
                                 Text(store.session(id: note.sessionID)?.title ?? "Session")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                 Text(note.body.isEmpty ? "Photo" : note.body)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -45,14 +46,13 @@ struct ScheduleList: View {
                         .foregroundStyle(.secondary)
                 }
                 ForEach(sessions) { session in
-                    Button {
+                    RouteRow(push: push, selected: !push && router.selectedSessionID == session.id) {
                         router.openSession(session.id, push: push)
-                    } label: {
+                    } content: {
                         SessionRow(session: session, store: store, emphasized: session.isHappening())
                     }
-                    .buttonStyle(.plain)
                     #if os(visionOS)
-                    .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 12))
+                    .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: CKRadius.card))
                     .hoverEffect()
                     #endif
                     .scheduleScrollFade()
@@ -142,6 +142,7 @@ struct SessionDetail: View {
                 if showsInlineNotes {
                     Text("Notes")
                         .font(.title2.weight(.semibold))
+                        .accessibilityAddTraits(.isHeader)
                     NotesEditor(store: store, session: session)
                         .frame(minHeight: 280)
                 }
@@ -194,6 +195,7 @@ struct SessionDetail: View {
                         }
                         Spacer()
                     }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -210,6 +212,33 @@ struct SessionDetail: View {
         }
     }
 
+    @ViewBuilder
+    private var sessionActions: some View {
+        Button {
+            Task { router.statusMessage = await ConferenceActions.addToCalendar(store, sessions: [session]) }
+        } label: {
+            Label("Calendar", systemImage: "calendar.badge.plus")
+        }
+        Button {
+            Task { await SessionActionRunner.remind(store, router: router, session: session) }
+        } label: {
+            Label("Remind", systemImage: "alarm")
+        }
+        #if os(iOS)
+        if ConferenceWindowRegistration.sessions, UIApplication.shared.supportsMultipleScenes {
+            Button {
+                UIApplication.shared.requestSceneSessionActivation(
+                    nil, userActivity: ConferenceActivity.makeSession(session.id), options: nil
+                ) { error in
+                    ConferenceNavigation.shared.sceneActivationError = error.localizedDescription
+                }
+            } label: {
+                Label("New Window", systemImage: "plus.rectangle.on.rectangle")
+            }
+        }
+        #endif
+    }
+
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         #if !os(visionOS)
@@ -224,20 +253,18 @@ struct SessionDetail: View {
             }
             .accessibilityLabel(store.favorites.contains(session.id) ? "Remove from My Schedule" : "Add to My Schedule")
         }
+        #if os(iOS)
+        // Two primary actions on the bar; the rest wait under More so the title keeps its room.
         ToolbarItem(placement: .primaryAction) {
-            Button {
-                Task { router.statusMessage = await ConferenceActions.addToCalendar(store, sessions: [session]) }
+            Menu {
+                sessionActions
             } label: {
-                Label("Calendar", systemImage: "calendar.badge.plus")
+                Label("More", systemImage: "ellipsis.circle")
             }
         }
-        ToolbarItem(placement: .primaryAction) {
-            Button {
-                Task { await SessionActionRunner.remind(store, router: router, session: session) }
-            } label: {
-                Label("Remind", systemImage: "alarm")
-            }
-        }
+        #else
+        ToolbarItemGroup(placement: .primaryAction) { sessionActions }
+        #endif
         #endif
         #if os(iOS) || os(macOS) || os(visionOS)
         if let url = store.shareURL(for: .session(session.id)) {
@@ -246,11 +273,13 @@ struct SessionDetail: View {
             }
         }
         #endif
+        #if !os(iOS)
         if ConferenceWindowRegistration.sessions {
             ToolbarItem(placement: .primaryAction) {
                 NewSessionWindowButton(sessionID: session.id)
             }
         }
+        #endif
     }
 }
 
@@ -277,6 +306,7 @@ struct SpeakerDetail: View {
                     Link(destination: link.url) { Label(link.platform.label, systemImage: "link") }
                 }
                 Text("Sessions").font(.title3.weight(.semibold))
+                    .accessibilityAddTraits(.isHeader)
                 ForEach(store.manifest?.sessions(for: speaker.id) ?? []) { session in
                     Button {
                         router.openSession(session.id, push: push)
@@ -296,10 +326,11 @@ struct SpeakerDetail: View {
                     store.publishFavorites()
                 } label: {
                     Label(
-                        "Favorite",
+                        store.favorites.containsSpeaker(speaker.id) ? "Favorited" : "Favorite",
                         systemImage: store.favorites.containsSpeaker(speaker.id) ? "star.fill" : "star"
                     )
                 }
+                .accessibilityLabel(store.favorites.containsSpeaker(speaker.id) ? "Remove from Favorites" : "Add to Favorites")
             }
             #if os(iOS) || os(macOS) || os(visionOS)
             if let url = store.shareURL(for: .speaker(speaker.id)) {
@@ -370,7 +401,7 @@ struct LiveSessionStage: View {
                         Link(destination: slides) { Label("Slides", systemImage: "rectangle.on.rectangle") }
                     }
                     if let recording = session.recordingURL {
-                        Link(destination: recording) { Label("Link", systemImage: "link") }
+                        Link(destination: recording) { Label("Recording", systemImage: "play.rectangle") }
                     }
                 }
                 .padding()

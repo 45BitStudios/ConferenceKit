@@ -28,6 +28,20 @@ public struct ConferenceTheme: Codable, Hashable, Sendable {
     }
 
     public var accentColor: Color { Color(hex: accent) ?? .orange }
+
+    /// The accent toned for text, symbols and control tint. Same hue as ``accentColor``,
+    /// moved until it holds 4.5:1 on the system backgrounds of `scheme`.
+    /// Use ``accentColor`` only for fills that carry no text.
+    public func accentInkColor(for scheme: ColorScheme) -> Color {
+        guard let parsed = HexColor(accent) else { return accentColor }
+        let toned = parsed.toned(againstLuminance: scheme == .dark ? Self.darkGround : Self.lightGround)
+        return Color(.sRGB, red: toned.red, green: toned.green, blue: toned.blue, opacity: toned.alpha)
+    }
+
+    /// Luminance of the least forgiving system grounds: grouped background in light (#F2F2F7),
+    /// tertiary background in dark (#2C2C2E).
+    static let lightGround = 0.887
+    static let darkGround = 0.0252
     public var primaryColor: Color { Color(hex: primary) ?? .primary }
     public var secondaryColor: Color { Color(hex: secondary) ?? .secondary }
     public var backgroundColor: Color { Color(hex: background) ?? fallbackBackground }
@@ -82,8 +96,20 @@ extension EnvironmentValues {
 
 extension View {
     public func conferenceTheme(_ theme: ConferenceTheme) -> some View {
-        environment(\.conferenceTheme, theme)
-            .tint(theme.accentColor)
+        modifier(ConferenceThemeModifier(theme: theme))
+    }
+}
+
+/// Tint is the contrast-safe accent, so tinted text, links and symbols stay legible
+/// whatever accent a conference ships.
+private struct ConferenceThemeModifier: ViewModifier {
+    let theme: ConferenceTheme
+    @Environment(\.colorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.conferenceTheme, theme)
+            .tint(theme.accentInkColor(for: scheme))
             .preferredColorScheme(theme.colorScheme)
     }
 }

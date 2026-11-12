@@ -11,10 +11,10 @@ struct SessionRow: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(store.clock.timeString(session.startTime, style: store.timeDisplay))
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(store.theme.accentColor)
+                    .foregroundStyle(.tint)
                 if store.favorites.contains(session.id) {
                     Image(systemName: "star.fill")
-                        .foregroundStyle(store.theme.accentColor)
+                        .foregroundStyle(.tint)
                         .accessibilityLabel("Favorited")
                 }
                 Spacer(minLength: 8)
@@ -108,8 +108,9 @@ struct DayStrip: View {
                 }
             }
             .padding(.horizontal)
-            .padding(.vertical, 8)
+            .padding(.vertical, 2)
         }
+        .scrollIndicators(.hidden)
         #if os(watchOS) || os(tvOS)
         .background(.ultraThinMaterial)
         #else
@@ -127,10 +128,77 @@ struct DayStrip: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(selected ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.12), in: Capsule())
+                // The capsule keeps its compact look; the tappable area is a full hit target.
+                .frame(minHeight: CKSize.hitTarget)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
+}
+
+/// A list row that opens a route. The whole row is the hit target, a pushed row shows the
+/// disclosure chevron, and a row feeding a split view shows that it is selected.
+struct RouteRow<Content: View>: View {
+    var push: Bool
+    var selected = false
+    var action: () -> Void
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                content
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                #if os(iOS)
+                if push {
+                    Image(systemName: "chevron.forward")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                }
+                #endif
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(selected ? Color.accentColor.opacity(0.12) : nil)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// A confirmation that fades after a few seconds, on the bar material above the content.
+/// Anything that needs a decision is an alert; "Reminder set" and "Added to Calendar" are not.
+struct StatusToast: ViewModifier {
+    var router: ConferenceRouter
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if let message = router.statusMessage {
+                    Text(message)
+                        .font(.subheadline)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.regularMaterial, in: Capsule())
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
+                        .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+                        .onAppear { AccessibilityNotification.Announcement(message).post() }
+                        .task(id: message) {
+                            try? await Task.sleep(for: .seconds(4))
+                            if router.statusMessage == message { router.statusMessage = nil }
+                        }
+                }
+            }
+            .animation(reduceMotion ? nil : .snappy, value: router.statusMessage)
+    }
+}
+
+extension View {
+    func statusToast(_ router: ConferenceRouter) -> some View { modifier(StatusToast(router: router)) }
 }
 
 struct EmptyPane: View {
@@ -151,13 +219,12 @@ struct StatusBanner: View {
     var text: String
 
     var body: some View {
-        Text(text)
+        Label(text, systemImage: "exclamationmark.triangle.fill")
             .font(.footnote)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .padding(.vertical, 8)
-            .background(.yellow.opacity(0.25))
-            .accessibilityLabel(text)
+            .background(.regularMaterial)
     }
 }
 

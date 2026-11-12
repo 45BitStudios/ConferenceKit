@@ -205,11 +205,7 @@ struct ConferenceSettingsWindow: View {
             .task {
                 router.followLive = FollowLivePreference.load(from: ConferenceKitConfiguration.shared.resolvedDefaults())
             }
-            .alert("Conference", isPresented: Binding(get: { router.statusMessage != nil }, set: { if !$0 { router.statusMessage = nil } })) {
-                Button("OK", role: .cancel) { router.statusMessage = nil }
-            } message: {
-                Text(router.statusMessage ?? "")
-            }
+            .statusToast(router)
     }
 }
 #endif

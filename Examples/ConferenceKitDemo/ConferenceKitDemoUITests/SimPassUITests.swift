@@ -212,6 +212,9 @@ final class SimPassUITests: XCTestCase {
     }
 
     private func tapRemind() -> Bool {
+        // On iPhone and iPad, Remind sits under the More menu in the navigation bar.
+        let more = app.buttons["More"].firstMatch
+        if more.waitForExistence(timeout: 2) { more.tap() }
         let remind = app.buttons["Remind"].firstMatch
         guard remind.waitForExistence(timeout: 4) else { log("no Remind button"); return false }
         remind.tap()
